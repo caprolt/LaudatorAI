@@ -1,0 +1,164 @@
+"""File storage service for MinIO/S3."""
+
+import os
+import hashlib
+from typing import Optional, BinaryIO
+from pathlib import Path
+
+import boto3
+from botocore.exceptions import ClientError, NoCredentialsError
+from minio import Minio
+from minio.error import S3Error
+
+from app.core.config import settings
+
+
+class FileStorageService:
+    """File storage service using MinIO/S3."""
+    
+    def __init__(self):
+        """Initialize file storage service."""
+        self.bucket_name = settings.MINIO_BUCKET_NAME
+        
+        # Initialize MinIO client
+        self.minio_client = Minio(
+            settings.MINIO_ENDPOINT,
+            access_key=settings.MINIO_ACCESS_KEY,
+            secret_key=settings.MINIO_SECRET_KEY,
+            secure=settings.MINIO_SECURE
+        )
+        
+        # Initialize S3 client as fallback
+        self.s3_client = boto3.client(
+            's3',
+            aws_access_key_id=settings.MINIO_ACCESS_KEY,
+            aws_secret_access_key=settings.MINIO_SECRET_KEY,
+            endpoint_url=f"http://{settings.MINIO_ENDPOINT}" if not settings.MINIO_SECURE else f"https://{settings.MINIO_ENDPOINT}",
+            region_name='us-east-1'  # Default region for MinIO
+        )
+        
+        self._ensure_bucket_exists()
+    
+    def _ensure_bucket_exists(self):
+        """Ensure the bucket exists, create if it doesn't."""
+        try:
+            if not self.minio_client.bucket_exists(self.bucket_name):
+                self.minio_client.make_bucket(self.bucket_name)
+        except S3Error as e:
+            raise Exception(f"Failed to create bucket: {e}")
+    
+    def upload_file(self, file_path: str, object_name: Optional[str] = None) -> str:
+        """Upload a file to storage."""
+        if object_name is None:
+            object_name = os.path.basename(file_path)
+        
+        try:
+            self.minio_client.fput_object(
+                self.bucket_name,
+                object_name,
+                file_path
+            )
+            return f"{self.bucket_name}/{object_name}"
+        except S3Error as e:
+            raise Exception(f"Failed to upload file: {e}")
+    
+    def upload_fileobj(self, file_obj: BinaryIO, object_name: str, content_type: Optional[str] = None) -> str:
+        """Upload a file object to storage."""
+        try:
+            self.minio_client.put_object(
+                self.bucket_name,
+                object_name,
+                file_obj,
+                length=-1,  # Let MinIO determine length
+                content_type=content_type
+            )
+            return f"{self.bucket_name}/{object_name}"
+        except S3Error as e:
+            raise Exception(f"Failed to upload file object: {e}")
+    
+    def download_file(self, object_name: str, file_path: str) -> bool:
+        """Download a file from storage."""
+        try:
+            self.minio_client.fget_object(
+                self.bucket_name,
+                object_name,
+                file_path
+            )
+            return True
+        except S3Error as e:
+            raise Exception(f"Failed to download file: {e}")
+    
+    def get_file_url(self, object_name: str, expires: int = 3600) -> str:
+        """Get a presigned URL for file access."""
+        try:
+            return self.minio_client.presigned_get_object(
+                self.bucket_name,
+                object_name,
+                expires=expires
+            )
+        except S3Error as e:
+            raise Exception(f"Failed to generate presigned URL: {e}")
+    
+    def delete_file(self, object_name: str) -> bool:
+        """Delete a file from storage."""
+        try:
+            self.minio_client.remove_object(self.bucket_name, object_name)
+            return True
+        except S3Error as e:
+            raise Exception(f"Failed to delete file: {e}")
+    
+    def file_exists(self, object_name: str) -> bool:
+        """Check if a file exists in storage."""
+        try:
+            self.minio_client.stat_object(self.bucket_name, object_name)
+            return True
+        except S3Error:
+            return False
+    
+    def get_file_info(self, object_name: str) -> dict:
+        """Get file information."""
+        try:
+            stat = self.minio_client.stat_object(self.bucket_name, object_name)
+            return {
+                "size": stat.size,
+                "last_modified": stat.last_modified,
+                "etag": stat.etag,
+                "content_type": stat.content_type
+            }
+        except S3Error as e:
+            raise Exception(f"Failed to get file info: {e}")
+    
+    def list_files(self, prefix: str = "", recursive: bool = True) -> list:
+        """List files in storage."""
+        try:
+            objects = self.minio_client.list_objects(
+                self.bucket_name,
+                prefix=prefix,
+                recursive=recursive
+            )
+            return [obj.object_name for obj in objects]
+        except S3Error as e:
+            raise Exception(f"Failed to list files: {e}")
+
+
+# Global file storage service instance
+file_storage = FileStorageService()
+
+
+def calculate_file_hash(file_path: str) -> str:
+    """Calculate SHA256 hash of a file."""
+    hash_sha256 = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_sha256.update(chunk)
+    return hash_sha256.hexdigest()
+
+
+def get_file_extension(filename: str) -> str:
+    """Get file extension from filename."""
+    return Path(filename).suffix.lower()
+
+
+def is_valid_file_type(filename: str, allowed_extensions: list) -> bool:
+    """Check if file type is allowed."""
+    return get_file_extension(filename) in allowed_extensions
