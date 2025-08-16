@@ -5,6 +5,7 @@ from typing import Dict, Any
 
 from app.core.celery_app import celery_app
 from app.core.logging import log_task_start, log_task_complete, log_task_error
+from app.services.resume_processing import tailor_resume
 
 
 @celery_app.task(bind=True)
@@ -17,16 +18,19 @@ def process_application(self, application_id: int, job_id: int, resume_id: int) 
         log_task_start(task_id, task_type, application_id=application_id, job_id=job_id, resume_id=resume_id)
         start_time = time.time()
         
-        # TODO: Implement application processing logic
-        # This will be implemented in Phase 5
+        # Start resume tailoring
+        tailor_task = tailor_resume.delay(application_id, job_id, resume_id)
         
-        # Placeholder result
+        # TODO: Start cover letter generation (Phase 5)
+        # generate_cover_letter.delay(application_id, job_id, resume_id)
+        
         result = {
             "application_id": application_id,
             "job_id": job_id,
             "resume_id": resume_id,
+            "tailor_task_id": tailor_task.id,
             "status": "processing",
-            "message": "Application processing started"
+            "message": "Application processing started - resume tailoring initiated"
         }
         
         duration = time.time() - start_time

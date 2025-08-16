@@ -1,7 +1,7 @@
 """Pydantic schemas for API requests and responses."""
 
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, HttpUrl
 
 
@@ -81,6 +81,31 @@ class ResumeResponse(ResumeBase, TimestampSchema):
     status: str
 
 
+# Resume processing schemas
+class ResumePreviewRequest(BaseModel):
+    """Schema for resume preview request."""
+    
+    job_id: Optional[int] = None
+
+
+class ResumePreviewResponse(BaseModel):
+    """Schema for resume preview response."""
+    
+    resume_id: int
+    job_id: Optional[int] = None
+    html_preview: str
+    parsed_content: Dict[str, Any]
+
+
+class ResumeProcessingResponse(BaseModel):
+    """Schema for resume processing response."""
+    
+    resume_id: int
+    status: str
+    parsed_content: Optional[Dict[str, Any]] = None
+    message: str
+
+
 # Job Application schemas
 class JobApplicationBase(BaseModel):
     """Base job application schema."""
@@ -111,6 +136,18 @@ class JobApplicationResponse(JobApplicationBase, TimestampSchema):
     cover_letter_path: Optional[str] = None
     status: str
     feedback: Optional[str] = None
+
+
+# Application preview schemas
+class ApplicationPreviewResponse(BaseModel):
+    """Schema for application preview response."""
+    
+    application_id: int
+    job: Dict[str, Any]
+    resume: Dict[str, Any]
+    application_status: str
+    preview_task_id: str
+    message: str
 
 
 # Processing Task schemas
