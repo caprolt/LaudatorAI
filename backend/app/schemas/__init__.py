@@ -151,6 +151,27 @@ class HealthResponse(BaseModel):
     timestamp: datetime
 
 
+# Job processing schemas
+class JobUrlRequest(BaseModel):
+    """Schema for job URL processing request."""
+    
+    url: HttpUrl
+
+
+class JobProcessingResponse(BaseModel):
+    """Schema for job processing response."""
+    
+    job_id: int
+    status: str
+    title: Optional[str] = None
+    company: Optional[str] = None
+    location: Optional[str] = None
+    description: Optional[str] = None
+    requirements: Optional[str] = None
+    normalized_content: Optional[Dict[str, Any]] = None
+    message: Optional[str] = None
+
+
 # Error schemas
 class ErrorResponse(BaseModel):
     """Error response schema."""

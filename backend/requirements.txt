@@ -15,6 +15,7 @@ celery==5.3.4
 # Web scraping
 playwright==1.40.0
 readability-lxml==0.8.1
+beautifulsoup4==4.12.2
 
 # Document processing
 python-docx==1.1.0

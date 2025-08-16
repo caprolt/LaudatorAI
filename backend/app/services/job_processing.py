@@ -1,10 +1,16 @@
 """Job processing service with Celery tasks."""
 
 import time
+import asyncio
 from typing import Dict, Any
+from sqlalchemy.orm import Session
 
 from app.core.celery_app import celery_app
 from app.core.logging import log_task_start, log_task_complete, log_task_error
+from app.core.database import get_db
+from app.models import Job
+from app.services.web_scraping import scrape_job_posting
+from app.services.jd_normalization import normalize_job_description
 
 
 @celery_app.task(bind=True)
@@ -12,19 +18,47 @@ def process_job_posting(self, job_id: int, url: str) -> Dict[str, Any]:
     """Process a job posting URL and extract job details."""
     task_id = self.request.id
     task_type = "job_processing"
+    start_time = time.time()
     
     try:
         log_task_start(task_id, task_type, job_id=job_id, url=url)
-        start_time = time.time()
         
-        # TODO: Implement job posting processing logic
-        # This will be implemented in Phase 3
+        # Get database session
+        db = next(get_db())
         
-        # Placeholder result
+        # Update job status to processing
+        job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            raise ValueError(f"Job with ID {job_id} not found")
+        
+        job.status = "processing"
+        db.commit()
+        
+        # Scrape the job posting
+        raw_content = asyncio.run(scrape_job_posting(url))
+        
+        # Normalize the job description
+        normalized = normalize_job_description(raw_content)
+        
+        # Update job with scraped and normalized content
+        job.title = normalized.title or job.title
+        job.company = normalized.company or job.company
+        job.location = normalized.location or job.location
+        job.description = normalized.description or job.description
+        job.requirements = "\n".join(normalized.requirements) if normalized.requirements else None
+        job.raw_content = normalized.raw_content
+        job.normalized_content = _serialize_normalized_content(normalized)
+        job.status = "completed"
+        
+        db.commit()
+        
         result = {
             "job_id": job_id,
-            "status": "processing",
-            "message": "Job processing started"
+            "status": "completed",
+            "title": normalized.title,
+            "company": normalized.company,
+            "requirements_count": len(normalized.requirements),
+            "skills_count": len(normalized.skills)
         }
         
         duration = time.time() - start_time
@@ -34,6 +68,17 @@ def process_job_posting(self, job_id: int, url: str) -> Dict[str, Any]:
         
     except Exception as e:
         duration = time.time() - start_time
+        
+        # Update job status to failed
+        try:
+            db = next(get_db())
+            job = db.query(Job).filter(Job.id == job_id).first()
+            if job:
+                job.status = "failed"
+                db.commit()
+        except Exception:
+            pass
+        
         log_task_error(task_id, task_type, str(e), job_id=job_id, duration=duration)
         raise
 
@@ -43,19 +88,38 @@ def normalize_job_description(self, job_id: int, raw_content: str) -> Dict[str, 
     """Normalize and structure job description content."""
     task_id = self.request.id
     task_type = "job_normalization"
+    start_time = time.time()
     
     try:
         log_task_start(task_id, task_type, job_id=job_id)
-        start_time = time.time()
         
-        # TODO: Implement job description normalization logic
-        # This will be implemented in Phase 3
+        # Get database session
+        db = next(get_db())
         
-        # Placeholder result
+        # Get job record
+        job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            raise ValueError(f"Job with ID {job_id} not found")
+        
+        # Parse raw content if it's a string
+        if isinstance(raw_content, str):
+            import json
+            raw_content = json.loads(raw_content)
+        
+        # Normalize the job description
+        normalized = normalize_job_description(raw_content)
+        
+        # Update job with normalized content
+        job.normalized_content = _serialize_normalized_content(normalized)
+        job.status = "completed"
+        
+        db.commit()
+        
         result = {
             "job_id": job_id,
             "status": "normalized",
-            "message": "Job description normalized"
+            "requirements_count": len(normalized.requirements),
+            "skills_count": len(normalized.skills)
         }
         
         duration = time.time() - start_time
@@ -67,3 +131,25 @@ def normalize_job_description(self, job_id: int, raw_content: str) -> Dict[str, 
         duration = time.time() - start_time
         log_task_error(task_id, task_type, str(e), job_id=job_id, duration=duration)
         raise
+
+
+def _serialize_normalized_content(normalized) -> str:
+    """Serialize normalized content to JSON string."""
+    import json
+    
+    return json.dumps({
+        "title": normalized.title,
+        "company": normalized.company,
+        "location": normalized.location,
+        "description": normalized.description,
+        "requirements": normalized.requirements,
+        "responsibilities": normalized.responsibilities,
+        "benefits": normalized.benefits,
+        "salary_range": normalized.salary_range,
+        "employment_type": normalized.employment_type,
+        "experience_level": normalized.experience_level,
+        "skills": normalized.skills,
+        "education": normalized.education,
+        "industry": normalized.industry,
+        "department": normalized.department
+    })
