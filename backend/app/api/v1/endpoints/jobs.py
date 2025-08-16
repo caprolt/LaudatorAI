@@ -152,6 +152,44 @@ async def process_job_url(request: JobUrlRequest, db: Session = Depends(get_db))
         raise HTTPException(status_code=500, detail=f"Failed to process job URL: {str(e)}")
 
 
+@router.post("/extract", response_model=JobResponse)
+async def extract_job_description(request: JobUrlRequest, db: Session = Depends(get_db)):
+    """Extract job description from URL - frontend-compatible endpoint."""
+    try:
+        url = str(request.url)
+        
+        # Check if job already exists
+        existing_job = db.query(Job).filter(Job.url == url).first()
+        if existing_job:
+            # Return existing job if already processed
+            if existing_job.status == "completed":
+                return existing_job
+            else:
+                raise HTTPException(status_code=409, detail="Job is already being processed")
+        
+        # Create job record
+        db_job = Job(
+            url=url,
+            title="Processing...",
+            company="Processing...",
+            description="Processing...",
+            status="pending"
+        )
+        
+        db.add(db_job)
+        db.commit()
+        db.refresh(db_job)
+        
+        # Start background processing
+        process_job_posting.delay(db_job.id, url)
+        
+        return db_job
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to extract job description: {str(e)}")
+
+
 @router.get("/{job_id}/status")
 async def get_job_status(job_id: int, db: Session = Depends(get_db)):
     """Get job processing status."""

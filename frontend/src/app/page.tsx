@@ -49,6 +49,7 @@ export default function Home() {
       setApplication(newApplication);
       setAppState('processing');
     } catch (err) {
+      console.error('Error creating application:', err);
       setError(err instanceof Error ? err.message : 'Failed to create application');
     } finally {
       setIsProcessing(false);
@@ -64,6 +65,25 @@ export default function Home() {
   };
 
   const canGenerate = jobDescription && resume && !isProcessing;
+
+  // Show error alert if there's an error
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto">
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <Button onClick={handleBackToStart} className="w-full">
+              Back to Start
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (appState === 'results' && application) {
     return (
@@ -148,12 +168,7 @@ export default function Home() {
               </div>
 
               {/* Error Display */}
-              {error && (
-                <Alert variant="destructive" className="mb-8">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+              {/* Error Display */}
 
               {/* Generate Button */}
               <div className="text-center">

@@ -206,3 +206,13 @@ async def get_application_preview(application_id: int, db: Session = Depends(get
         "preview_task_id": preview_task.id,
         "message": "Application preview generation started"
     }
+
+
+@router.get("/{application_id}/status")
+async def get_application_status(application_id: int, db: Session = Depends(get_db)):
+    """Get application processing status."""
+    application = db.query(JobApplication).filter(JobApplication.id == application_id).first()
+    if application is None:
+        raise HTTPException(status_code=404, detail="Job application not found")
+    
+    return application

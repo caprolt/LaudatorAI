@@ -50,6 +50,12 @@ class JobResponse(JobBase, TimestampSchema):
     status: str
     raw_content: Optional[str] = None
     normalized_content: Optional[str] = None
+    
+    # Frontend-compatible fields
+    requirements: Optional[List[str]] = None  # Changed from str to List[str]
+    
+    class Config:
+        from_attributes = True
 
 
 # Resume schemas
@@ -79,6 +85,12 @@ class ResumeResponse(ResumeBase, TimestampSchema):
     id: int
     parsed_content: Optional[str] = None
     status: str
+    
+    # Frontend-compatible fields
+    content: Optional[Dict[str, Any]] = None  # Structured JSON content
+    
+    class Config:
+        from_attributes = True
 
 
 # Resume processing schemas
@@ -136,6 +148,15 @@ class JobApplicationResponse(JobApplicationBase, TimestampSchema):
     cover_letter_path: Optional[str] = None
     status: str
     feedback: Optional[str] = None
+    
+    # Frontend-compatible fields
+    tailored_resume_url: Optional[str] = None
+    cover_letter_url: Optional[str] = None
+    job_description_id: Optional[int] = None  # Alias for job_id
+    resume_id: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
 
 
 # Application preview schemas

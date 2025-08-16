@@ -3,9 +3,11 @@
 from typing import Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from app.services.cover_letter_processing import generate_cover_letter, preview_cover_letter
 from app.core.logging import get_logger
+from app.core.database import get_db
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -202,3 +204,24 @@ async def cover_letter_health_check() -> Dict[str, Any]:
             "llm_provider": "unknown",
             "templates_available": False
         }
+
+
+@router.get("/{application_id}")
+async def get_cover_letter_by_application(application_id: int, db: Session = Depends(get_db)):
+    """Get cover letter by application ID."""
+    # This would need to be implemented based on your data model
+    # For now, returning a placeholder response
+    from app.models import CoverLetter
+    
+    cover_letter = db.query(CoverLetter).filter(CoverLetter.application_id == application_id).first()
+    if cover_letter is None:
+        raise HTTPException(status_code=404, detail="Cover letter not found")
+    
+    return {
+        "id": cover_letter.id,
+        "application_id": cover_letter.application_id,
+        "content": cover_letter.content,
+        "docx_url": cover_letter.docx_url,
+        "pdf_url": cover_letter.pdf_url,
+        "created_at": cover_letter.created_at.isoformat() if cover_letter.created_at else None
+    }
