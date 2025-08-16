@@ -20,31 +20,55 @@ Notes:
 - Advanced: You may include a repotrackr.yml at repo root to declare the plan path(s) and customize markers.
 -->
 
-# Project Planning Document
+# LaudatorAI — AI-Powered Job Application Assistant
 
 ## 📋 Project Overview
 
-**Project Name:** [Your Project Name]  
+**Project Name:** LaudatorAI  
 **Repository:** https://github.com/caprolt/LaudatorAI  
-**Start Date:** [YYYY-MM-DD]  
-**Target Completion:** [YYYY-MM-DD]  
+**Start Date:** 2024-12-19  
+**Target Completion:** 2025-03-19  
 **Status:** 🟡 In Progress
+
+**Description:** LaudatorAI is your AI advocate in the job market, inspired by the ancient *laudator* — one who praises and elevates others' achievements. This platform automates the tailoring of resumes and the crafting of cover letters to match specific job postings, ensuring your applications stand out with precision and polish.
 
 ## 🎯 Goals
 
-- [ ] Define clear project objectives
-- [ ] Identify target users/audience
+- [x] Define clear project objectives
+- [x] Identify target users/audience
 - [ ] Establish success metrics
-- [ ] Set project scope and boundaries
+- [x] Set project scope and boundaries
+
+### Core Goals
+- [ ] Ingest a job posting URL, extract a normalized Job Description (JD)
+- [ ] Parse a base resume into structured JSON
+- [ ] Generate a tailored resume (DOCX + PDF) and a cover letter (DOCX + PDF)
+- [ ] Provide a diff/preview UI for human-in-the-loop edits
+
+### Non-Goals (MVP)
+- [x] Account creation & billing (excluded)
+- [x] Multi-language JD parsing beyond English (excluded)
+- [x] Advanced ATS scoring and company intel (excluded)
 
 ## 🧩 Architecture & Design
 
 ### System Architecture
-- [ ] Design high-level system architecture
-- [ ] Choose technology stack
+- [x] Design high-level system architecture
+- [x] Choose technology stack
 - [ ] Plan database schema
 - [ ] Define API structure
 - [ ] Plan deployment strategy
+
+### Technology Stack
+- **Frontend**: Next.js (App Router), Tailwind, shadcn/ui
+- **API**: FastAPI (Python 3.11+)
+- **Workers**: Celery (Redis broker)
+- **Data**: Postgres (metadata), local MinIO/S3 (files)
+- **Vector (optional, M3+)**: Qdrant/FAISS
+- **Scraping**: Playwright + Readability fallback
+- **LLM Provider**: pluggable (OpenAI/Ollama/HF via one interface)
+- **PDF/DOCX**: `python-docx` + `weasyprint` (or `docx-template` + `wkhtmltopdf`)
+- **Observability**: Sentry + basic logging; Prometheus later
 
 ### UI/UX
 - [ ] Create wireframes and mockups
@@ -54,29 +78,85 @@ Notes:
 
 ## 🚀 Phases
 
-### Phase 1: Foundation
-Status: 🟢 Complete  
+### Phase 1: Foundation & Setup
+Status: 🟡 In Progress  
 Tasks
 - [x] Initialize repository
 - [x] Set up dev environment
-- [x] Configure CI/CD
+- [ ] Configure CI/CD
 - [x] Add documentation structure
+- [ ] Set up project scaffolding
+- [ ] Configure development tools and linting
 
-### Phase 2: Core Features
-Status: 🟡 In Progress  
-Tasks
-- [x] Implement core data models
-- [~] Build main business logic
-- [ ] Add input validation and error handling
-- [!] Blocked: Waiting on third-party API credentials
-
-### Phase 3: Frontend
+### Phase 2: Core Backend Infrastructure
 Status: 🔴 Not Started  
 Tasks
-- [ ] Set up frontend framework
-- [ ] Implement layout and navigation
-- [ ] Build key components
-- [ ] Add state management
+- [ ] Set up FastAPI application structure
+- [ ] Configure PostgreSQL database
+- [ ] Set up Redis for Celery broker
+- [ ] Implement basic API endpoints
+- [ ] Set up file storage (MinIO/S3)
+- [ ] Configure logging and observability
+
+### Phase 3: Job Description Processing
+Status: 🔴 Not Started  
+Tasks
+- [ ] Implement job posting URL ingestion
+- [ ] Build web scraping with Playwright
+- [ ] Create Readability fallback parser
+- [ ] Develop JD normalization logic
+- [ ] Build JD extraction API endpoints
+- [ ] Add error handling and validation
+
+### Phase 4: Resume Processing
+Status: 🔴 Not Started  
+Tasks
+- [ ] Implement resume parsing into structured JSON
+- [ ] Build resume template system
+- [ ] Create resume tailoring logic
+- [ ] Develop DOCX generation with python-docx
+- [ ] Implement PDF conversion with weasyprint
+- [ ] Add resume preview functionality
+
+### Phase 5: Cover Letter Generation
+Status: 🔴 Not Started  
+Tasks
+- [ ] Design cover letter generation prompts
+- [ ] Implement LLM integration (OpenAI/Ollama/HF)
+- [ ] Build cover letter template system
+- [ ] Create DOCX and PDF generation for cover letters
+- [ ] Add cover letter preview functionality
+
+### Phase 6: Frontend Development
+Status: 🔴 Not Started  
+Tasks
+- [ ] Set up Next.js with App Router
+- [ ] Configure Tailwind CSS and shadcn/ui
+- [ ] Build main application layout
+- [ ] Implement job posting input form
+- [ ] Create resume upload interface
+- [ ] Build diff/preview UI for edits
+- [ ] Add responsive design and accessibility
+
+### Phase 7: Integration & Testing
+Status: 🔴 Not Started  
+Tasks
+- [ ] Integrate frontend with backend APIs
+- [ ] Implement end-to-end workflows
+- [ ] Add comprehensive error handling
+- [ ] Build user feedback mechanisms
+- [ ] Perform security testing
+- [ ] Optimize performance
+
+### Phase 8: Deployment & Launch
+Status: 🔴 Not Started  
+Tasks
+- [ ] Set up staging environment
+- [ ] Configure production environment
+- [ ] Implement monitoring and alerts
+- [ ] Create rollback procedures
+- [ ] Perform load testing
+- [ ] Launch MVP
 
 ## 📈 Progress & Status Notes
 - [ ] Document current risks and mitigations
@@ -86,14 +166,18 @@ Tasks
 ## 🧪 Testing & Quality
 - [ ] Unit tests for core modules
 - [ ] Integration tests for critical flows
+- [ ] End-to-end testing for user workflows
 - [ ] Linting and formatting
 - [ ] Observability (logs/metrics)
+- [ ] Security testing
 
 ## 📦 Deployment
-- [ ] Staging environment
-- [ ] Production environment
+- [ ] Staging environment setup
+- [ ] Production environment configuration
+- [ ] CI/CD pipeline implementation
 - [ ] Rollback plan
 - [ ] Monitoring and alerts
+- [ ] Performance optimization
 
 <!-- End of scaffold. You can customize sections, add or remove phases, and expand tasks.
      RepoTrackr will parse checkbox items and compute progress automatically. -->
