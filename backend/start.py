@@ -53,17 +53,22 @@ def main():
         host = os.getenv('HOST', '0.0.0.0')
         
         logger.info(f"Starting server on {host}:{port}")
+        logger.info(f"Environment: {os.getenv('ENVIRONMENT', 'development')}")
+        logger.info(f"Debug mode: {os.getenv('DEBUG', 'false')}")
         
         uvicorn.run(
             app,
             host=host,
             port=port,
             workers=1,
-            log_level="info"
+            log_level="info",
+            access_log=True
         )
         
     except Exception as e:
         logger.error(f"Failed to start application: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         sys.exit(1)
 
 if __name__ == "__main__":
