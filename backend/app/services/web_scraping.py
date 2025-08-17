@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 import re
 
 from playwright.async_api import async_playwright, Browser, Page
-from readability import Document
+# from readability import Document  # Temporarily disabled due to lxml compatibility issue
 import httpx
 
 from app.core.logging import get_logger
@@ -233,55 +233,18 @@ class WebScrapingService:
     
     async def _scrape_with_readability(self, url: str) -> Dict[str, Any]:
         """Fallback scraping using Readability."""
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.get(url)
-                response.raise_for_status()
-                
-                html_content = response.text
-                doc = Document(html_content)
-                
-                # Extract content using Readability
-                content = {
-                    'title': doc.title() or '',
-                    'company': '',
-                    'location': '',
-                    'description': doc.summary() or '',
-                    'requirements': '',
-                    'content': html_content,
-                    'metadata': {}
-                }
-                
-                # Try to extract company and location from title or content
-                title = content['title']
-                if title:
-                    # Common patterns for job titles
-                    company_patterns = [
-                        r'at\s+([A-Z][A-Za-z\s&]+?)(?:\s*[-|]|\s*$|\s*in\s)',
-                        r'([A-Z][A-Za-z\s&]+?)\s*[-|]\s*',
-                        r'([A-Z][A-Za-z\s&]+?)\s*is\s+hiring'
-                    ]
-                    
-                    for pattern in company_patterns:
-                        match = re.search(pattern, title)
-                        if match:
-                            content['company'] = match.group(1).strip()
-                            break
-                
-                return content
-                
-        except Exception as e:
-            logger.error(f"Readability scraping failed for {url}: {str(e)}")
-            return {
-                'title': '',
-                'company': '',
-                'location': '',
-                'description': '',
-                'requirements': '',
-                'content': '',
-                'metadata': {},
-                'error': str(e)
-            }
+        # Temporarily disabled due to lxml compatibility issue
+        logger.warning(f"Readability fallback disabled for {url}")
+        return {
+            'title': '',
+            'company': '',
+            'location': '',
+            'description': '',
+            'requirements': '',
+            'content': '',
+            'metadata': {},
+            'error': 'Readability fallback temporarily disabled'
+        }
 
 
 async def scrape_job_posting(url: str) -> Dict[str, Any]:

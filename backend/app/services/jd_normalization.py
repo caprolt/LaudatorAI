@@ -18,16 +18,16 @@ class NormalizedJobDescription:
     
     title: str
     company: str
-    location: Optional[str] = None
     description: str
     requirements: List[str]
     responsibilities: List[str]
     qualifications: List[str]
     benefits: List[str]
+    skills: List[str]
+    location: Optional[str] = None
     salary_range: Optional[str] = None
     employment_type: Optional[str] = None
     experience_level: Optional[str] = None
-    skills: List[str]
     education: Optional[str] = None
     industry: Optional[str] = None
     department: Optional[str] = None

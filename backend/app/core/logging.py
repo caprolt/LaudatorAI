@@ -87,53 +87,29 @@ logger = setup_logging()
 def log_request(request_id: str, method: str, path: str, status_code: int, duration: float) -> None:
     """Log HTTP request details."""
     logger.info(
-        "HTTP Request",
-        request_id=request_id,
-        method=method,
-        path=path,
-        status_code=status_code,
-        duration=f"{duration:.3f}s"
+        f"HTTP Request | request_id={request_id} | method={method} | path={path} | status_code={status_code} | duration={duration:.3f}s"
     )
 
 
 def log_task_start(task_id: str, task_type: str, **kwargs: Any) -> None:
     """Log task start."""
-    logger.info(
-        "Task Started",
-        task_id=task_id,
-        task_type=task_type,
-        **kwargs
-    )
+    kwargs_str = " ".join([f"{k}={v}" for k, v in kwargs.items()]) if kwargs else ""
+    logger.info(f"Task Started | task_id={task_id} | task_type={task_type} {kwargs_str}")
 
 
 def log_task_complete(task_id: str, task_type: str, duration: float, **kwargs: Any) -> None:
     """Log task completion."""
-    logger.info(
-        "Task Completed",
-        task_id=task_id,
-        task_type=task_type,
-        duration=f"{duration:.3f}s",
-        **kwargs
-    )
+    kwargs_str = " ".join([f"{k}={v}" for k, v in kwargs.items()]) if kwargs else ""
+    logger.info(f"Task Completed | task_id={task_id} | task_type={task_type} | duration={duration:.3f}s {kwargs_str}")
 
 
 def log_task_error(task_id: str, task_type: str, error: str, **kwargs: Any) -> None:
     """Log task error."""
-    logger.error(
-        "Task Error",
-        task_id=task_id,
-        task_type=task_type,
-        error=error,
-        **kwargs
-    )
+    kwargs_str = " ".join([f"{k}={v}" for k, v in kwargs.items()]) if kwargs else ""
+    logger.error(f"Task Error | task_id={task_id} | task_type={task_type} | error={error} {kwargs_str}")
 
 
 def log_file_operation(operation: str, file_path: str, success: bool, **kwargs: Any) -> None:
     """Log file operation."""
-    logger.info(
-        "File Operation",
-        operation=operation,
-        file_path=file_path,
-        success=success,
-        **kwargs
-    )
+    kwargs_str = " ".join([f"{k}={v}" for k, v in kwargs.items()]) if kwargs else ""
+    logger.info(f"File Operation | operation={operation} | file_path={file_path} | success={success} {kwargs_str}")

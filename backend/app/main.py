@@ -98,7 +98,7 @@ async def health_check():
 async def global_exception_handler(request: Request, exc: Exception):
     """Global exception handler."""
     request_id = getattr(request.state, "request_id", "unknown")
-    logger.error(f"Unhandled exception: {exc}", request_id=request_id)
+    logger.error(f"Unhandled exception: {exc} | request_id={request_id}")
     
     return JSONResponse(
         status_code=500,
