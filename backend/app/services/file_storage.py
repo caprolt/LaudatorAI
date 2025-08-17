@@ -141,8 +141,24 @@ class FileStorageService:
             raise Exception(f"Failed to list files: {e}")
 
 
-# Global file storage service instance
-file_storage = FileStorageService()
+# Global file storage service instance - lazy initialization
+_file_storage_instance = None
+
+def get_file_storage():
+    """Get the global file storage service instance with lazy initialization."""
+    global _file_storage_instance
+    if _file_storage_instance is None:
+        _file_storage_instance = FileStorageService()
+    return _file_storage_instance
+
+# For backward compatibility, create a property that calls get_file_storage
+class FileStorageProxy:
+    """Proxy class to maintain backward compatibility while enabling lazy initialization."""
+    
+    def __getattr__(self, name):
+        return getattr(get_file_storage(), name)
+
+file_storage = FileStorageProxy()
 
 
 def calculate_file_hash(file_path: str) -> str:

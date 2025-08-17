@@ -12,8 +12,16 @@ from docx import Document
 from docx.shared import Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.shared import OxmlElement, qn
-from weasyprint import HTML, CSS
-from weasyprint.text.fonts import FontConfiguration
+# Optional WeasyPrint import for PDF generation
+try:
+    from weasyprint import HTML, CSS
+    from weasyprint.text.fonts import FontConfiguration
+    WEASYPRINT_AVAILABLE = True
+except (ImportError, OSError):
+    WEASYPRINT_AVAILABLE = False
+    HTML = None
+    CSS = None
+    FontConfiguration = None
 
 from app.core.celery_app import celery_app
 from app.core.logging import log_task_start, log_task_complete, log_task_error
@@ -440,6 +448,9 @@ class ResumeGenerator:
     
     def generate_pdf(self, docx_path: str) -> str:
         """Convert DOCX to PDF using weasyprint."""
+        if not WEASYPRINT_AVAILABLE:
+            raise RuntimeError("WeasyPrint is not available. PDF generation requires WeasyPrint to be installed with proper system dependencies.")
+        
         # First convert DOCX to HTML (simplified approach)
         html_content = self._docx_to_html(docx_path)
         

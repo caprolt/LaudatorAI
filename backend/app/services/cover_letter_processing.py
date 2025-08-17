@@ -11,8 +11,16 @@ from docx import Document
 from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.shared import OxmlElement, qn
-from weasyprint import HTML, CSS
-from weasyprint.text.fonts import FontConfiguration
+# Optional WeasyPrint import for PDF generation
+try:
+    from weasyprint import HTML, CSS
+    from weasyprint.text.fonts import FontConfiguration
+    WEASYPRINT_AVAILABLE = True
+except (ImportError, OSError):
+    WEASYPRINT_AVAILABLE = False
+    HTML = None
+    CSS = None
+    FontConfiguration = None
 import openai
 from openai import OpenAI
 
@@ -227,6 +235,9 @@ class CoverLetterDocumentGenerator:
         personal_info: Dict[str, Any]
     ) -> bytes:
         """Generate PDF cover letter."""
+        if not WEASYPRINT_AVAILABLE:
+            raise RuntimeError("WeasyPrint is not available. PDF generation requires WeasyPrint to be installed with proper system dependencies.")
+        
         # Generate HTML content
         html_content = self._generate_html(cover_letter_content, job_description, personal_info)
         
