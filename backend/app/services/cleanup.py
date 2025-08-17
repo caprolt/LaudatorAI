@@ -68,3 +68,52 @@ def cleanup_old_files(self) -> Dict[str, Any]:
         duration = time.time() - start_time
         log_task_error(task_id, task_type, str(e), duration=duration)
         raise
+
+
+@celery_app.task(bind=True)
+def cleanup_stuck_jobs(self) -> Dict[str, Any]:
+    """Clean up jobs that have been stuck in processing for too long."""
+    task_id = self.request.id
+    task_type = "cleanup_stuck_jobs"
+    
+    try:
+        log_task_start(task_id, task_type)
+        start_time = time.time()
+        
+        from app.core.database import SessionLocal
+        from app.models import Job
+        
+        db = SessionLocal()
+        try:
+            # Find jobs that have been stuck for more than 15 minutes
+            cutoff_time = datetime.now() - timedelta(minutes=15)
+            stuck_jobs = db.query(Job).filter(
+                Job.status.in_(["pending", "processing"]),
+                Job.created_at < cutoff_time
+            ).all()
+            
+            stuck_count = 0
+            for job in stuck_jobs:
+                job.status = "failed"
+                stuck_count += 1
+            
+            db.commit()
+            
+            result = {
+                "status": "completed",
+                "message": f"Cleaned up {stuck_count} stuck jobs",
+                "stuck_jobs_cleaned": stuck_count
+            }
+            
+        finally:
+            db.close()
+        
+        duration = time.time() - start_time
+        log_task_complete(task_id, task_type, duration=duration)
+        
+        return result
+        
+    except Exception as e:
+        duration = time.time() - start_time
+        log_task_error(task_id, task_type, str(e), duration=duration)
+        raise

@@ -122,8 +122,32 @@ async def process_job_url(request: JobUrlRequest, db: Session = Depends(get_db))
                     "requirements": existing_job.requirements,
                     "normalized_content": json.loads(existing_job.normalized_content) if existing_job.normalized_content else None
                 }
-            else:
-                raise HTTPException(status_code=409, detail="Job is already being processed")
+            elif existing_job.status == "failed":
+                # Retry failed jobs
+                existing_job.status = "pending"
+                db.commit()
+                process_job_posting.delay(existing_job.id, url)
+                return {
+                    "job_id": existing_job.id,
+                    "status": "processing",
+                    "message": "Job processing restarted"
+                }
+            elif existing_job.status in ["pending", "processing"]:
+                # Check if job has been stuck for too long (more than 10 minutes)
+                import datetime
+                time_diff = datetime.datetime.now(existing_job.created_at.tzinfo) - existing_job.created_at
+                if time_diff.total_seconds() > 600:  # 10 minutes
+                    # Reset stuck job
+                    existing_job.status = "pending"
+                    db.commit()
+                    process_job_posting.delay(existing_job.id, url)
+                    return {
+                        "job_id": existing_job.id,
+                        "status": "processing",
+                        "message": "Job processing restarted (was stuck)"
+                    }
+                else:
+                    raise HTTPException(status_code=409, detail="Job is already being processed")
         
         # Create job record
         db_job = Job(
@@ -164,8 +188,24 @@ async def extract_job_description(request: JobUrlRequest, db: Session = Depends(
             # Return existing job if already processed
             if existing_job.status == "completed":
                 return existing_job
-            else:
-                raise HTTPException(status_code=409, detail="Job is already being processed")
+            elif existing_job.status == "failed":
+                # Retry failed jobs
+                existing_job.status = "pending"
+                db.commit()
+                process_job_posting.delay(existing_job.id, url)
+                return existing_job
+            elif existing_job.status in ["pending", "processing"]:
+                # Check if job has been stuck for too long (more than 10 minutes)
+                import datetime
+                time_diff = datetime.datetime.now(existing_job.created_at.tzinfo) - existing_job.created_at
+                if time_diff.total_seconds() > 600:  # 10 minutes
+                    # Reset stuck job
+                    existing_job.status = "pending"
+                    db.commit()
+                    process_job_posting.delay(existing_job.id, url)
+                    return existing_job
+                else:
+                    raise HTTPException(status_code=409, detail="Job is already being processed")
         
         # Create job record
         db_job = Job(

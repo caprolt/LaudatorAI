@@ -60,6 +60,7 @@ services:
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_BUCKET_NAME=laudatorai
+      - BACKEND_CORS_ORIGINS=http://localhost:3000,http://localhost:3001
     depends_on:
       postgres:
         condition: service_healthy

@@ -33,6 +33,10 @@ celery_app.conf.update(
             "task": "app.services.cleanup.cleanup_old_tasks",
             "schedule": 3600.0,  # Every hour
         },
+        "cleanup-stuck-jobs": {
+            "task": "app.services.cleanup.cleanup_stuck_jobs",
+            "schedule": 900.0,  # Every 15 minutes
+        },
     },
 )
 

@@ -29,9 +29,38 @@
 - PostgreSQL
 - Redis
 
-## 🛠️ Quick Start
+## 🚀 Deployment
 
-### Option 1: Docker Compose (Recommended)
+### Production Deployment (Recommended)
+
+LaudatorAI is configured for deployment on modern cloud platforms:
+
+- **Backend**: Deployed on Railway with PostgreSQL and Redis
+- **Frontend**: Deployed on Vercel with automatic CI/CD
+
+📖 **Complete Deployment Guide**: [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+
+### Quick Deployment Steps
+
+1. **Backend (Railway)**:
+   - Connect your GitHub repository to Railway
+   - Add PostgreSQL and Redis services
+   - Configure environment variables
+   - Deploy automatically on push to main
+
+2. **Frontend (Vercel)**:
+   - Connect your GitHub repository to Vercel
+   - Configure environment variables
+   - Deploy automatically on push to main
+
+3. **Integration**:
+   - Update CORS settings
+   - Test API connectivity
+   - Configure custom domains (optional)
+
+## 🛠️ Local Development
+
+### Option 1: Docker Compose (Recommended for Local)
 
 1. Clone the repository:
 ```bash
@@ -50,7 +79,7 @@ docker-compose up -d
 - API Documentation: http://localhost:8000/docs
 - MinIO Console: http://localhost:9001
 
-### Option 2: Local Development
+### Option 2: Local Development Setup
 
 #### Backend Setup
 
