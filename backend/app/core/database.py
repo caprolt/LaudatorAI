@@ -10,8 +10,8 @@ from app.models import Base
 # Create database engine
 engine = create_engine(
     settings.SQLALCHEMY_DATABASE_URI,
-    poolclass=StaticPool,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.SQLALCHEMY_DATABASE_URI else {},
+    pool_pre_ping=True,  # Enable connection health checks
+    pool_recycle=300,    # Recycle connections every 5 minutes
 )
 
 # Create session factory

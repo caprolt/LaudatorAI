@@ -73,7 +73,9 @@ async def startup_event():
         logger.info("Database initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
-        raise
+        # Don't raise the exception - let the app start even if DB fails
+        # This allows the health check to work even if DB is not available
+        logger.warning("Application starting without database connection")
 
 
 @app.on_event("shutdown")
@@ -91,7 +93,30 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "service": "LaudatorAI API", "timestamp": time.time()}
+    try:
+        # Test database connection
+        from app.core.database import engine
+        with engine.connect() as conn:
+            conn.execute("SELECT 1")
+        
+        return {
+            "status": "healthy", 
+            "service": "LaudatorAI API", 
+            "timestamp": time.time(),
+            "version": "0.1.0",
+            "database": "connected"
+        }
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        # Return 200 even if DB fails, but indicate the issue
+        return {
+            "status": "degraded", 
+            "service": "LaudatorAI API", 
+            "timestamp": time.time(),
+            "version": "0.1.0",
+            "database": "disconnected",
+            "error": str(e)
+        }
 
 
 @app.exception_handler(Exception)
