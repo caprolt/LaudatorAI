@@ -1,53 +1,117 @@
 # Railway Deployment Troubleshooting Guide
 
-This guide helps you resolve common issues when deploying the LaudatorAI backend to Railway.
-
 ## Common Issues and Solutions
 
-### 1. Health Check Failures
+### 1. 502 Bad Gateway Error
 
-**Symptoms:**
-- Railway shows "Healthcheck failed!"
-- Service unavailable errors
-- Application not starting
+**Symptoms**: Backend returns 502 Bad Gateway when accessed
+**Causes**: Application failing to start, missing dependencies, environment variable issues
 
-**Solutions:**
+**Solutions**:
 
-#### A. Check Environment Variables
-Ensure these environment variables are set in Railway:
-```bash
-DATABASE_URL=postgresql://...
-REDIS_URL=redis://...
-BACKEND_CORS_ORIGINS=https://your-frontend.vercel.app
-```
-
-#### B. Check Database Connection
-The health check now tests database connectivity. If the database is not accessible:
-- Verify PostgreSQL service is running in Railway
-- Check `DATABASE_URL` format
-- Ensure database is not in maintenance mode
-
-#### C. Check Application Logs
-1. Go to Railway Dashboard
-2. Click on your service
+#### Check Railway Logs
+1. Go to your Railway project dashboard
+2. Click on your backend service
 3. Go to "Deployments" tab
 4. Click on the latest deployment
-5. Check the logs for errors
+5. Check the logs for error messages
 
-### 2. Application Startup Issues
+#### Verify Environment Variables
+Ensure these environment variables are set in Railway:
 
-**Symptoms:**
-- Application fails to start
-- Import errors
-- Missing dependencies
+```bash
+# Required for Railway
+DATABASE_URL=postgresql://...
+REDIS_URL=redis://...
 
-**Solutions:**
+# CORS Configuration (add your frontend domain)
+BACKEND_CORS_ORIGINS=https://your-frontend-domain.vercel.app,http://localhost:3000
 
-#### A. Check Requirements
+# Optional but recommended
+ENVIRONMENT=production
+DEBUG=false
+OPENAI_API_KEY=your-openai-key
+```
+
+#### Check Application Startup
+The application should start with the command specified in `railway.json`:
+```json
+{
+  "deploy": {
+    "startCommand": "python start.py"
+  }
+}
+```
+
+### 2. CORS Issues
+
+**Symptoms**: Frontend can't connect to backend, CORS errors in browser console
+
+**Solutions**:
+
+#### Update CORS Configuration
+1. In Railway dashboard, go to your backend service
+2. Go to "Variables" tab
+3. Add/update `BACKEND_CORS_ORIGINS`:
+   ```
+   BACKEND_CORS_ORIGINS=https://your-frontend-domain.vercel.app,http://localhost:3000
+   ```
+
+#### Verify CORS in Code
+The CORS configuration is in `app/main.py`:
+```python
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+### 3. Database Connection Issues
+
+**Symptoms**: Application fails to start, database connection errors
+
+**Solutions**:
+
+#### Check Database URL
+1. Ensure `DATABASE_URL` is set in Railway
+2. Format should be: `postgresql://username:password@host:port/database`
+3. Railway automatically provides this when you add a PostgreSQL service
+
+#### Test Database Connection
+Add this to your `start.py` for debugging:
+```python
+import os
+print(f"DATABASE_URL: {os.getenv('DATABASE_URL', 'NOT SET')}")
+```
+
+### 4. Redis Connection Issues
+
+**Symptoms**: Celery tasks failing, Redis connection errors
+
+**Solutions**:
+
+#### Check Redis URL
+1. Ensure `REDIS_URL` is set in Railway
+2. Format should be: `redis://username:password@host:port/database`
+3. Railway automatically provides this when you add a Redis service
+
+### 5. Build Issues
+
+**Symptoms**: Deployment fails during build phase
+
+**Solutions**:
+
+#### Check Requirements
 Ensure all dependencies are in `requirements.txt`:
 ```bash
+# Core dependencies
 fastapi==0.116.1
 uvicorn[standard]==0.35.0
+pydantic==2.11.7
+pydantic-settings==2.10.1
 sqlalchemy==2.0.43
 alembic==1.14.0
 psycopg2-binary==2.9.10
@@ -55,235 +119,97 @@ redis==5.2.0
 celery==5.5.3
 ```
 
-#### B. Check Python Version
-The application requires Python 3.11+. Railway should automatically detect this.
-
-#### C. Check Build Process
-1. Monitor the build logs in Railway
-2. Look for any failed pip install commands
-3. Check for missing system dependencies
-
-### 3. Database Migration Issues
-
-**Symptoms:**
-- Database tables not created
-- Migration errors
-- Connection timeouts
-
-**Solutions:**
-
-#### A. Manual Migration
-If automatic migrations fail, you can run them manually:
-1. Go to Railway Dashboard
-2. Click on your service
-3. Go to "Variables" tab
-4. Add a temporary variable: `RUN_MIGRATIONS=true`
-5. Redeploy the service
-
-#### B. Check Database URL
-Ensure the `DATABASE_URL` is in the correct format:
-```
-postgresql://username:password@host:port/database
+#### Check Python Version
+Ensure `pyproject.toml` specifies Python 3.11+:
+```toml
+[project]
+requires-python = ">=3.11"
 ```
 
-#### C. Database Permissions
-Ensure the database user has the necessary permissions:
-- CREATE TABLE
-- INSERT, SELECT, UPDATE, DELETE
-- CREATE INDEX
+### 6. Health Check Issues
 
-### 4. Port and Host Issues
+**Symptoms**: Railway health checks failing
 
-**Symptoms:**
-- Application not accessible
-- Connection refused errors
-- Wrong port binding
+**Solutions**:
 
-**Solutions:**
-
-#### A. Check Port Configuration
-Railway automatically provides the `PORT` environment variable. The application should bind to:
-```python
-port = int(os.getenv('PORT', 8000))
-host = '0.0.0.0'  # Important: bind to all interfaces
+#### Verify Health Endpoint
+The health endpoint is at `/health` and should return:
+```json
+{
+  "status": "healthy",
+  "service": "LaudatorAI API",
+  "timestamp": 1234567890,
+  "version": "0.1.0"
+}
 ```
 
-#### B. Check Railway Configuration
-Ensure `railway.json` has the correct settings:
+#### Update Railway Configuration
+Ensure `railway.json` has correct health check path:
 ```json
 {
   "deploy": {
-    "startCommand": "python start.py",
     "healthcheckPath": "/health",
-    "healthcheckTimeout": 120
+    "healthcheckTimeout": 180
   }
 }
 ```
 
-### 5. Memory and Resource Issues
-
-**Symptoms:**
-- Application crashes
-- Out of memory errors
-- Slow performance
-
-**Solutions:**
-
-#### A. Check Resource Usage
-1. Go to Railway Dashboard
-2. Monitor CPU and memory usage
-3. Consider upgrading the service plan if needed
-
-#### B. Optimize Application
-- Use single worker mode (`--workers 1`)
-- Implement connection pooling
-- Add caching where appropriate
-
-### 6. CORS Issues
-
-**Symptoms:**
-- Frontend can't connect to backend
-- CORS errors in browser console
-- API requests blocked
-
-**Solutions:**
-
-#### A. Update CORS Configuration
-Set the correct frontend URL in Railway environment variables:
-```bash
-BACKEND_CORS_ORIGINS=https://your-frontend.vercel.app
-```
-
-#### B. Check Multiple Origins
-If you have multiple frontend URLs, separate them with commas:
-```bash
-BACKEND_CORS_ORIGINS=https://app1.vercel.app,https://app2.vercel.app
-```
-
 ## Debugging Steps
 
-### 1. Check Application Logs
+### 1. Check Railway Logs
 ```bash
-# In Railway Dashboard
-# Go to your service → Deployments → Latest deployment → Logs
+# View recent logs
+railway logs
+
+# Follow logs in real-time
+railway logs --follow
 ```
 
-### 2. Test Health Endpoint Locally
+### 2. Test Locally with Railway Environment
 ```bash
-# Test the health endpoint
-curl http://localhost:8000/health
+# Get Railway environment variables
+railway variables
+
+# Test locally with Railway env
+railway run python start.py
 ```
 
-### 3. Check Environment Variables
-```bash
-# In Railway Dashboard
-# Go to your service → Variables
-# Ensure all required variables are set
-```
+### 3. Verify Service Dependencies
+Ensure your backend service depends on:
+- PostgreSQL service
+- Redis service
 
-### 4. Test Database Connection
-```bash
-# You can test the database connection using Railway's shell
-# Go to your service → Deployments → Latest deployment → Shell
-psql $DATABASE_URL -c "SELECT 1;"
-```
+### 4. Check Resource Limits
+Railway has resource limits. Check if your app is hitting them:
+- CPU usage
+- Memory usage
+- Disk space
 
-### 5. Check Redis Connection
-```bash
-# Test Redis connection
-redis-cli -u $REDIS_URL ping
-```
+## Quick Fix Checklist
 
-## Emergency Recovery
+- [ ] Check Railway logs for specific error messages
+- [ ] Verify all environment variables are set
+- [ ] Ensure DATABASE_URL and REDIS_URL are correct
+- [ ] Update BACKEND_CORS_ORIGINS with your frontend domain
+- [ ] Verify the application starts locally with Railway environment
+- [ ] Check that all required services (PostgreSQL, Redis) are running
+- [ ] Ensure health endpoint `/health` is accessible
+- [ ] Verify build process completes successfully
 
-### 1. Rollback to Previous Deployment
-1. Go to Railway Dashboard
-2. Click on your service
+## Emergency Rollback
+
+If deployment is completely broken:
+
+1. Go to Railway dashboard
+2. Click on your backend service
 3. Go to "Deployments" tab
-4. Find a working deployment
-5. Click "Redeploy"
+4. Find the last working deployment
+5. Click "Redeploy" on that deployment
 
-### 2. Reset Environment Variables
-1. Go to Railway Dashboard
-2. Click on your service
-3. Go to "Variables" tab
-4. Reset to default values
-5. Redeploy
+## Contact Support
 
-### 3. Recreate Service
-If all else fails:
-1. Create a new Railway service
-2. Connect to the same GitHub repository
-3. Configure environment variables
-4. Deploy
-
-## Monitoring and Alerts
-
-### 1. Set Up Monitoring
-- Monitor the `/health` endpoint
-- Set up alerts for failed deployments
-- Monitor resource usage
-
-### 2. Log Analysis
-- Use Railway's built-in log viewer
-- Set up external logging (e.g., Sentry)
-- Monitor error rates
-
-### 3. Performance Monitoring
-- Monitor response times
-- Track database query performance
-- Monitor memory usage
-
-## Best Practices
-
-### 1. Environment Management
-- Use different environments for dev/staging/prod
-- Never commit secrets to the repository
-- Use Railway's secret management
-
-### 2. Deployment Strategy
-- Test locally before deploying
-- Use feature branches for development
-- Monitor deployments closely
-
-### 3. Database Management
-- Use migrations for schema changes
-- Backup data regularly
-- Monitor database performance
-
-### 4. Security
-- Use HTTPS in production
-- Validate all inputs
-- Implement rate limiting
-- Regular security updates
-
-## Getting Help
-
-If you're still experiencing issues:
-
-1. **Check Railway Documentation**: https://docs.railway.app
-2. **Review Application Logs**: Look for specific error messages
-3. **Test Locally**: Ensure the application works locally
-4. **Contact Support**: Use Railway's support channels
-
-## Common Error Messages
-
-### "Service unavailable"
-- Check if the application is starting properly
-- Verify environment variables
-- Check database connectivity
-
-### "Connection refused"
-- Verify the application is binding to the correct port
-- Check Railway's port configuration
-- Ensure the service is running
-
-### "Database connection failed"
-- Verify `DATABASE_URL` is correct
-- Check if PostgreSQL service is running
-- Ensure database permissions
-
-### "Import error"
-- Check if all dependencies are in `requirements.txt`
-- Verify Python version compatibility
-- Check for missing system dependencies
+If issues persist:
+1. Collect logs from Railway dashboard
+2. Note the specific error messages
+3. Check this troubleshooting guide
+4. Contact Railway support with detailed information

@@ -21,10 +21,16 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
 )
 
-# Set up CORS
+# Set up CORS with fallback for empty origins
+cors_origins = settings.CORS_ORIGINS
+if not cors_origins:
+    # Fallback to allow all origins in development
+    cors_origins = ["*"]
+    logger.warning("No CORS origins configured, allowing all origins")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,6 +72,7 @@ async def add_process_time_header(request: Request, call_next):
 async def startup_event():
     """Initialize application on startup."""
     logger.info("Starting LaudatorAI API")
+    logger.info(f"CORS origins: {cors_origins}")
     
     # Initialize database (optional for now)
     try:
@@ -99,7 +106,8 @@ async def health_check():
             "status": "healthy", 
             "service": "LaudatorAI API", 
             "timestamp": time.time(),
-            "version": "0.1.0"
+            "version": "0.1.0",
+            "environment": settings.ENVIRONMENT
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
@@ -108,8 +116,15 @@ async def health_check():
             "service": "LaudatorAI API", 
             "timestamp": time.time(),
             "version": "0.1.0",
+            "environment": settings.ENVIRONMENT,
             "error": str(e)
         }
+
+
+@app.get("/api/v1/health")
+async def api_health_check():
+    """API health check endpoint."""
+    return await health_check()
 
 
 @app.exception_handler(Exception)
