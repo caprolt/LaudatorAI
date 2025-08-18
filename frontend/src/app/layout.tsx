@@ -10,6 +10,11 @@ export const metadata: Metadata = {
   keywords: 'AI, resume, cover letter, job application, career, employment',
   authors: [{ name: 'LaudatorAI Team' }],
   robots: 'index, follow',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 }
 
 export const viewport: Viewport = {

@@ -24,9 +24,15 @@ app = FastAPI(
 # Set up CORS with fallback for empty origins
 cors_origins = settings.CORS_ORIGINS
 if not cors_origins:
-    # Fallback to allow all origins in development
-    cors_origins = ["*"]
-    logger.warning("No CORS origins configured, allowing all origins")
+    # Fallback to allow common origins in production and development
+    cors_origins = [
+        "http://localhost:3000",
+        "http://localhost:3001", 
+        "https://laudator-ai.vercel.app",
+        "https://laudator-ai-git-main-caprolt.vercel.app",
+        "https://laudator-ai-caprolt.vercel.app"
+    ]
+    logger.warning("No CORS origins configured, using default origins")
 
 app.add_middleware(
     CORSMiddleware,
