@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     SENTRY_DSN: Optional[str] = None
     
     # Environment
-    ENVIRONMENT: str = "development"
+    ENVIRONMENT: str = "production"
     DEBUG: bool = True
 
     class Config:
