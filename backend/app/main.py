@@ -143,7 +143,14 @@ async def api_health_check():
     return await health_check()
 
 
-
+@app.get("/simple-health")
+async def simple_health_check():
+    """Simple health check that doesn't depend on any external services."""
+    return {
+        "status": "ok",
+        "message": "LaudatorAI API is running",
+        "timestamp": time.time()
+    }
 
 
 @app.exception_handler(Exception)

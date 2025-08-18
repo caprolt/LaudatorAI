@@ -23,53 +23,64 @@ ALLOWED_RESUME_EXTENSIONS = [".pdf", ".docx", ".doc"]
 @router.post("/upload", response_model=ResumeResponse)
 async def upload_resume(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """Upload a resume file."""
-    # Validate file type
-    if not is_valid_file_type(file.filename, ALLOWED_RESUME_EXTENSIONS):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid file type. Allowed types: {', '.join(ALLOWED_RESUME_EXTENSIONS)}"
-        )
-    
-    # Save file temporarily
-    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
-        content = await file.read()
-        temp_file.write(content)
-        temp_file_path = temp_file.name
-    
     try:
-        # Calculate file hash
-        file_hash = calculate_file_hash(temp_file_path)
+        # Validate file type
+        if not is_valid_file_type(file.filename, ALLOWED_RESUME_EXTENSIONS):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type. Allowed types: {', '.join(ALLOWED_RESUME_EXTENSIONS)}"
+            )
         
-        # Check if file already exists
-        existing_resume = db.query(Resume).filter(Resume.content_hash == file_hash).first()
-        if existing_resume:
-            os.unlink(temp_file_path)
-            return existing_resume
+        # Save file temporarily
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
+            content = await file.read()
+            temp_file.write(content)
+            temp_file_path = temp_file.name
         
-        # Upload to file storage
-        object_name = f"resumes/{file_hash}_{file.filename}"
-        file_path = file_storage.upload_file(temp_file_path, object_name)
-        
-        # Create resume record
-        db_resume = Resume(
-            filename=file.filename,
-            file_path=file_path,
-            content_hash=file_hash
+        try:
+            # Calculate file hash
+            file_hash = calculate_file_hash(temp_file_path)
+            
+            # Check if file already exists
+            existing_resume = db.query(Resume).filter(Resume.content_hash == file_hash).first()
+            if existing_resume:
+                os.unlink(temp_file_path)
+                return existing_resume
+            
+            # Upload to file storage
+            object_name = f"resumes/{file_hash}_{file.filename}"
+            file_path = file_storage.upload_file(temp_file_path, object_name)
+            
+            # Create resume record
+            db_resume = Resume(
+                filename=file.filename,
+                file_path=file_path,
+                content_hash=file_hash
+            )
+            
+            db.add(db_resume)
+            db.commit()
+            db.refresh(db_resume)
+            
+            # Start background parsing
+            parse_resume.delay(db_resume.id, file_path)
+            
+            return db_resume
+            
+        finally:
+            # Clean up temporary file
+            if os.path.exists(temp_file_path):
+                os.unlink(temp_file_path)
+                
+    except Exception as e:
+        # Log the error and return a proper error response
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in upload_resume: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
         )
-        
-        db.add(db_resume)
-        db.commit()
-        db.refresh(db_resume)
-        
-        # Start background parsing
-        parse_resume.delay(db_resume.id, file_path)
-        
-        return db_resume
-        
-    finally:
-        # Clean up temporary file
-        if os.path.exists(temp_file_path):
-            os.unlink(temp_file_path)
 
 
 @router.get("/", response_model=List[ResumeResponse])
