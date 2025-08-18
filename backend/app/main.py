@@ -29,10 +29,18 @@ if not cors_origins:
         "http://localhost:3000",
         "http://localhost:3001", 
         "https://laudator-ai.vercel.app",
-        "https://laudator-ai-git-main-caprolt.vercel.app",
-        "https://laudator-ai-caprolt.vercel.app"
+        "https://laudator-ai-tannercline-5407s-projects.vercel.app",
+        "https://laudator-ai-git-main-tannercline-5407s-projects.vercel.app"
     ]
     logger.warning("No CORS origins configured, using default origins")
+
+# Ensure CORS origins are properly set for production
+if settings.ENVIRONMENT == "production" and not cors_origins:
+    cors_origins = [
+        "https://laudator-ai.vercel.app",
+        "https://laudator-ai-tannercline-5407s-projects.vercel.app",
+        "https://laudator-ai-git-main-tannercline-5407s-projects.vercel.app"
+    ]
 
 app.add_middleware(
     CORSMiddleware,
@@ -78,7 +86,9 @@ async def add_process_time_header(request: Request, call_next):
 async def startup_event():
     """Initialize application on startup."""
     logger.info("Starting LaudatorAI API")
+    logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"CORS origins: {cors_origins}")
+    logger.info(f"BACKEND_CORS_ORIGINS env var: {settings.BACKEND_CORS_ORIGINS}")
     
     # Initialize database (optional for now)
     try:
@@ -131,6 +141,9 @@ async def health_check():
 async def api_health_check():
     """API health check endpoint."""
     return await health_check()
+
+
+
 
 
 @app.exception_handler(Exception)
