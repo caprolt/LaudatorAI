@@ -59,12 +59,12 @@ def test_database_connection():
         return True
     
     try:
-        from sqlalchemy import create_engine
+        from sqlalchemy import create_engine, text
         from sqlalchemy.exc import SQLAlchemyError
         
         engine = create_engine(database_url)
         with engine.connect() as conn:
-            conn.execute("SELECT 1")
+            conn.execute(text("SELECT 1"))
         logger.info("Database connection test passed")
         return True
     except SQLAlchemyError as e:
