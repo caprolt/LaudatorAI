@@ -110,9 +110,6 @@ export default function Home() {
         {/* Header */}
         <div className="text-center mb-12">
           <Logo size="xl" className="mb-6" />
-          <p className="text-xl text-yellow-100 max-w-3xl mx-auto leading-relaxed">
-            Your AI advocate in the job market, automating resume tailoring and cover letter generation with precision and elegance.
-          </p>
         </div>
 
         {/* Main Content */}

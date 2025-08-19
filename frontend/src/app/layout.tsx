@@ -11,9 +11,12 @@ export const metadata: Metadata = {
   authors: [{ name: 'LaudatorAI Team' }],
   robots: 'index, follow',
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
+    icon: [
+      { url: '/favicon.png', sizes: '144x144', type: 'image/png' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
   },
 }
 

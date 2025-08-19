@@ -64,13 +64,6 @@ export const Logo: React.FC<LogoProps> = ({
           </div>
         )}
       </div>
-
-      {/* Tagline - only show if not already in the logo image */}
-      {showTagline && (
-        <p className={`font-sans font-medium text-yellow-600 tracking-widest uppercase ${taglineSizes[size]} mt-1`}>
-          Your AI Advocate in the Job Market
-        </p>
-      )}
     </div>
   );
 };

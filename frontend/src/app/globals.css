@@ -73,18 +73,18 @@
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #D4AF37 0%, #FFD700 50%, #D4AF37 100%);
+  background: linear-gradient(135deg, #E2BC6F 0%, #E2BC6F 50%, #E2BC6F 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .maroon-bg {
-  background: linear-gradient(135deg, #800020 0%, #8B0000 50%, #800020 100%);
+  background: linear-gradient(135deg, #781440 0%, #781440 50%, #781440 100%);
 }
 
 .gold-border {
-  border: 2px solid #D4AF37;
+  border: 2px solid #E2BC6F;
 }
 
 .gold-shadow {
@@ -102,7 +102,7 @@
   left: -2px;
   right: -2px;
   bottom: -2px;
-  background: linear-gradient(45deg, #D4AF37, #FFD700, #D4AF37);
+  background: linear-gradient(45deg, #E2BC6F, #E2BC6F, #E2BC6F);
   border-radius: inherit;
   z-index: -1;
   opacity: 0.7;
