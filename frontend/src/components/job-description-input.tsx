@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Send, AlertCircle, CheckCircle } from 'lucide-react';
 import { apiClient, JobDescription } from '@/lib/api';
 
@@ -41,53 +40,43 @@ export function JobDescriptionInput({ onJobDescriptionExtracted }: JobDescriptio
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          Job Description
-        </CardTitle>
-        <CardDescription>
-          Paste the job posting URL to extract the job description
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="job-url">Job Posting URL</Label>
-          <Input
-            id="job-url"
-            type="url"
-            placeholder="https://example.com/job-posting"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="w-full"
-            disabled={isLoading}
-          />
-        </div>
-        
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="job-url" className="text-gray-700 font-medium">Job Posting URL</Label>
+        <Input
+          id="job-url"
+          type="url"
+          placeholder="https://example.com/job-posting"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          className="w-full border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+          disabled={isLoading}
+        />
+      </div>
+      
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-        {success && (
-          <Alert>
-            <CheckCircle className="h-4 w-4" />
-            <AlertDescription>{success}</AlertDescription>
-          </Alert>
-        )}
+      {success && (
+        <Alert className="border-green-200 bg-green-50 text-green-800">
+          <CheckCircle className="h-4 w-4" />
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      )}
 
-        <Button 
-          className="w-full" 
-          onClick={handleExtract}
-          disabled={isLoading || !url.trim()}
-        >
-          <Send className="h-4 w-4 mr-2" />
-          {isLoading ? 'Extracting...' : 'Extract Job Description'}
-        </Button>
-      </CardContent>
-    </Card>
+      <Button 
+        variant="maroon"
+        className="w-full" 
+        onClick={handleExtract}
+        disabled={isLoading || !url.trim()}
+      >
+        <Send className="h-4 w-4 mr-2" />
+        {isLoading ? 'Extracting...' : 'Extract Job Description'}
+      </Button>
+    </div>
   );
 }

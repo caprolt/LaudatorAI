@@ -3,7 +3,6 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Upload, AlertCircle, CheckCircle, FileText, X } from 'lucide-react';
 import { apiClient, ResumeData } from '@/lib/api';
@@ -115,108 +114,100 @@ export function ResumeUpload({ onResumeUploaded }: ResumeUploadProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Upload className="h-5 w-5" />
-          Resume Upload
-        </CardTitle>
-        <CardDescription>
-          Upload your base resume to get started
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {!uploadedFile ? (
-          <div
-            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-              isDragOver 
-                ? 'border-blue-500 bg-blue-50' 
-                : 'border-gray-300 hover:border-gray-400'
-            }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-            <p className="text-sm text-gray-600 mb-2">
-              Drag and drop your resume here, or click to browse
-            </p>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-            >
-              Choose File
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.docx"
-              onChange={handleFileInputChange}
-              className="hidden"
-            />
-          </div>
-        ) : (
-          <div className="border rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium">{uploadedFile.name}</span>
-                <span className="text-xs text-gray-500">
-                  ({(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)
-                </span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={removeFile}
-                disabled={isUploading}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {isUploading && (
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Uploading...</span>
-              <span>{uploadProgress}%</span>
-            </div>
-            <Progress value={uploadProgress} />
-          </div>
-        )}
-        
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {success && (
-          <Alert>
-            <CheckCircle className="h-4 w-4" />
-            <AlertDescription>{success}</AlertDescription>
-          </Alert>
-        )}
-
-        {uploadedFile && !isUploading && (
+    <div className="space-y-4">
+      {!uploadedFile ? (
+        <div
+          className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+            isDragOver 
+              ? 'border-yellow-500 bg-yellow-50' 
+              : 'border-gray-300 hover:border-yellow-400'
+          }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+          <p className="text-sm text-gray-600 mb-2">
+            Drag and drop your resume here, or click to browse
+          </p>
           <Button 
-            className="w-full" 
-            onClick={handleUpload}
+            variant="outline" 
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="border-yellow-400 text-yellow-700 hover:bg-yellow-50"
           >
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Resume
+            Choose File
           </Button>
-        )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.docx"
+            onChange={handleFileInputChange}
+            className="hidden"
+          />
+        </div>
+      ) : (
+        <div className="border border-yellow-200 rounded-lg p-4 bg-yellow-50/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-yellow-600" />
+              <span className="text-sm font-medium text-gray-800">{uploadedFile.name}</span>
+              <span className="text-xs text-gray-500">
+                ({(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={removeFile}
+              disabled={isUploading}
+              className="text-gray-500 hover:text-red-600"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
-        <p className="text-xs text-gray-500">
-          Supported formats: PDF, DOCX (max 10MB)
-        </p>
-      </CardContent>
-    </Card>
+      {isUploading && (
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-700">Uploading...</span>
+            <span className="text-gray-700">{uploadProgress}%</span>
+          </div>
+          <Progress value={uploadProgress} className="h-2" />
+        </div>
+      )}
+      
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {success && (
+        <Alert className="border-green-200 bg-green-50 text-green-800">
+          <CheckCircle className="h-4 w-4" />
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      )}
+
+      {uploadedFile && !isUploading && (
+        <Button 
+          variant="maroon"
+          className="w-full" 
+          onClick={handleUpload}
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          Upload Resume
+        </Button>
+      )}
+
+      <p className="text-xs text-gray-500">
+        Supported formats: PDF, DOCX (max 10MB)
+      </p>
+    </div>
   );
 }
