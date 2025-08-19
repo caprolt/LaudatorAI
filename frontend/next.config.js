@@ -1,11 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable experimental features for better logging
-  experimental: {
-    // Enable server actions for better error tracking
-    serverActions: true,
-  },
-  
   // Configure logging for production
   logging: {
     fetches: {
@@ -44,7 +38,6 @@ const nextConfig = {
   // Configure environment variables for logging
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
-    NODE_ENV: process.env.NODE_ENV,
     VERCEL_ENV: process.env.VERCEL_ENV,
     VERCEL_URL: process.env.VERCEL_URL,
   },
