@@ -1,146 +1,119 @@
 #!/usr/bin/env python3
-"""Debug script for Railway deployment issues."""
+"""Debug script for Railway environment variables and database connection."""
 
 import os
 import sys
-import logging
+from urllib.parse import urlparse
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-def check_environment_variables():
-    """Check if required environment variables are set."""
-    logger.info("=== Environment Variables Check ===")
+def debug_environment():
+    """Debug environment variables and database connection."""
+    print("=== Railway Environment Debug ===")
+    print()
     
-    required_vars = [
-        'DATABASE_URL',
-        'REDIS_URL',
-        'ENVIRONMENT',
-        'PORT',
-        'HOST'
-    ]
+    # Check environment variables
+    print("Environment Variables:")
+    print(f"  PORT: {os.getenv('PORT', 'NOT SET')}")
+    print(f"  HOST: {os.getenv('HOST', 'NOT SET')}")
+    print(f"  ENVIRONMENT: {os.getenv('ENVIRONMENT', 'NOT SET')}")
+    print()
     
-    optional_vars = [
-        'BACKEND_CORS_ORIGINS',
-        'OPENAI_API_KEY',
-        'MINIO_ENDPOINT',
-        'MINIO_ACCESS_KEY',
-        'MINIO_SECRET_KEY'
-    ]
-    
-    all_vars = required_vars + optional_vars
-    
-    for var in all_vars:
-        value = os.getenv(var)
-        if value:
-            # Mask sensitive values
-            if 'KEY' in var or 'PASSWORD' in var or 'SECRET' in var:
-                masked_value = value[:10] + "..." if len(value) > 10 else "***"
-                logger.info(f"✓ {var}: {masked_value}")
-            else:
-                logger.info(f"✓ {var}: {value}")
-        else:
-            if var in required_vars:
-                logger.error(f"✗ {var}: NOT SET (REQUIRED)")
-            else:
-                logger.warning(f"⚠ {var}: NOT SET (OPTIONAL)")
-
-def test_imports():
-    """Test if all required modules can be imported."""
-    logger.info("=== Import Test ===")
-    
-    modules = [
-        'fastapi',
-        'uvicorn',
-        'sqlalchemy',
-        'redis',
-        'celery',
-        'pydantic',
-        'pydantic_settings'
-    ]
-    
-    for module in modules:
-        try:
-            __import__(module)
-            logger.info(f"✓ {module}: imported successfully")
-        except ImportError as e:
-            logger.error(f"✗ {module}: import failed - {e}")
-
-def test_database_connection():
-    """Test database connection if DATABASE_URL is available."""
-    logger.info("=== Database Connection Test ===")
-    
+    # Check DATABASE_URL
     database_url = os.getenv('DATABASE_URL')
-    if not database_url:
-        logger.warning("DATABASE_URL not set, skipping database test")
-        return
-    
-    try:
-        from sqlalchemy import create_engine, text
-        from sqlalchemy.exc import SQLAlchemyError
-        
-        logger.info("Attempting to connect to database...")
-        engine = create_engine(database_url)
-        
-        with engine.connect() as conn:
-            result = conn.execute(text("SELECT 1"))
-            logger.info("✓ Database connection successful")
+    if database_url:
+        print("DATABASE_URL Analysis:")
+        try:
+            parsed = urlparse(database_url)
+            print(f"  Scheme: {parsed.scheme}")
+            print(f"  Host: {parsed.hostname}")
+            print(f"  Port: {parsed.port}")
+            print(f"  Database: {parsed.path[1:] if parsed.path else 'NOT SET'}")
+            print(f"  Username: {parsed.username}")
+            print(f"  Password: {'***' if parsed.password else 'NOT SET'}")
             
-    except SQLAlchemyError as e:
-        logger.error(f"✗ Database connection failed: {e}")
-    except Exception as e:
-        logger.error(f"✗ Unexpected error during database test: {e}")
-
-def test_redis_connection():
-    """Test Redis connection if REDIS_URL is available."""
-    logger.info("=== Redis Connection Test ===")
+            # Check for Railway internal hostname
+            if 'railway.internal' in parsed.hostname:
+                print("  ⚠️  WARNING: Internal Railway hostname detected!")
+                print("     This URL is only accessible from within Railway's network.")
+                print("     Make sure your services are properly linked in Railway dashboard.")
+            elif 'railway.app' in parsed.hostname:
+                print("  ✅ External Railway hostname detected")
+            else:
+                print(f"  ℹ️  Custom hostname: {parsed.hostname}")
+        except Exception as e:
+            print(f"  ❌ Error parsing DATABASE_URL: {e}")
+    else:
+        print("DATABASE_URL: NOT SET")
+        print("  Make sure you have a PostgreSQL service added to your Railway project")
+        print("  and it's properly linked to your backend service.")
+    print()
     
+    # Check REDIS_URL
     redis_url = os.getenv('REDIS_URL')
-    if not redis_url:
-        logger.warning("REDIS_URL not set, skipping Redis test")
-        return
+    if redis_url:
+        print("REDIS_URL Analysis:")
+        try:
+            parsed = urlparse(redis_url)
+            print(f"  Scheme: {parsed.scheme}")
+            print(f"  Host: {parsed.hostname}")
+            print(f"  Port: {parsed.port}")
+            print(f"  Database: {parsed.path[1:] if parsed.path else '0'}")
+            
+            if 'railway.internal' in parsed.hostname:
+                print("  ⚠️  WARNING: Internal Railway hostname detected!")
+            elif 'railway.app' in parsed.hostname:
+                print("  ✅ External Railway hostname detected")
+            else:
+                print(f"  ℹ️  Custom hostname: {parsed.hostname}")
+        except Exception as e:
+            print(f"  ❌ Error parsing REDIS_URL: {e}")
+    else:
+        print("REDIS_URL: NOT SET")
+        print("  Make sure you have a Redis service added to your Railway project")
+        print("  and it's properly linked to your backend service.")
+    print()
     
-    try:
-        import redis
-        logger.info("Attempting to connect to Redis...")
-        r = redis.from_url(redis_url)
-        r.ping()
-        logger.info("✓ Redis connection successful")
-    except Exception as e:
-        logger.error(f"✗ Redis connection failed: {e}")
-
-def test_app_startup():
-    """Test if the FastAPI app can be created."""
-    logger.info("=== App Startup Test ===")
+    # Test database connection
+    if database_url:
+        print("Database Connection Test:")
+        try:
+            import psycopg2
+            from urllib.parse import urlparse
+            
+            parsed = urlparse(database_url)
+            conn_params = {
+                'host': parsed.hostname,
+                'port': parsed.port or 5432,
+                'database': parsed.path[1:] if parsed.path else 'postgres',
+                'user': parsed.username,
+                'password': parsed.password
+            }
+            
+            print(f"  Attempting connection to {parsed.hostname}:{parsed.port or 5432}...")
+            conn = psycopg2.connect(**conn_params)
+            cursor = conn.cursor()
+            cursor.execute("SELECT version();")
+            version = cursor.fetchone()
+            print(f"  ✅ Connection successful!")
+            print(f"  PostgreSQL version: {version[0]}")
+            cursor.close()
+            conn.close()
+        except ImportError:
+            print("  ❌ psycopg2 not installed. Install with: pip install psycopg2-binary")
+        except Exception as e:
+            print(f"  ❌ Connection failed: {e}")
+            print("  This could be due to:")
+            print("    1. Services not properly linked in Railway")
+            print("    2. Internal hostname not accessible from current environment")
+            print("    3. Database service not running")
+            print("    4. Incorrect credentials")
+    print()
     
-    try:
-        from app.main import app
-        logger.info("✓ FastAPI app created successfully")
-        
-        # Test if we can access the app's routes
-        routes = [route.path for route in app.routes]
-        logger.info(f"✓ App has {len(routes)} routes")
-        logger.info(f"Routes: {routes[:5]}...")  # Show first 5 routes
-        
-    except Exception as e:
-        logger.error(f"✗ App startup failed: {e}")
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
-
-def main():
-    """Run all debug checks."""
-    logger.info("Starting Railway Debug Checks...")
-    logger.info(f"Python version: {sys.version}")
-    logger.info(f"Current working directory: {os.getcwd()}")
-    
-    check_environment_variables()
-    test_imports()
-    test_database_connection()
-    test_redis_connection()
-    test_app_startup()
-    
-    logger.info("=== Debug Checks Complete ===")
+    print("=== Debug Complete ===")
+    print()
+    print("Next steps:")
+    print("1. If you see internal hostnames, make sure services are linked in Railway dashboard")
+    print("2. If DATABASE_URL/REDIS_URL are not set, add PostgreSQL and Redis services to your project")
+    print("3. If connection fails, check that services are running and properly configured")
 
 if __name__ == "__main__":
-    main()
+    debug_environment()

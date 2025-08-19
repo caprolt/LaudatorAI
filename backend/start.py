@@ -38,6 +38,23 @@ def check_environment():
         os.environ['ENVIRONMENT'] = 'production'
         logger.info("Set default ENVIRONMENT=production")
     
+    # Debug environment variables (without sensitive data)
+    logger.info("Environment variable check:")
+    for var in required_vars:
+        value = os.getenv(var)
+        if value:
+            # Mask sensitive parts of URLs
+            if 'DATABASE_URL' in var and value:
+                masked_url = value.split('@')[0] + '@***' if '@' in value else '***'
+                logger.info(f"  {var}: {masked_url}")
+            elif 'REDIS_URL' in var and value:
+                masked_url = value.split('@')[0] + '@***' if '@' in value else '***'
+                logger.info(f"  {var}: {masked_url}")
+            else:
+                logger.info(f"  {var}: [SET]")
+        else:
+            logger.warning(f"  {var}: [MISSING]")
+    
     missing_vars = []
     for var in required_vars:
         if not os.getenv(var):
@@ -47,6 +64,7 @@ def check_environment():
         logger.warning(f"Missing environment variables: {missing_vars}")
         logger.warning("Application may not function properly without these variables")
         logger.warning("Add PostgreSQL and Redis services to your Railway project")
+        logger.warning("Make sure services are properly linked in Railway dashboard")
         return False
     
     logger.info("Environment variables check passed")
@@ -65,6 +83,22 @@ def check_dependencies():
         logger.error(f"Missing dependency: {e}")
         return False
 
+def fix_railway_database_url():
+    """Fix Railway DATABASE_URL if it contains internal hostname."""
+    database_url = os.getenv('DATABASE_URL')
+    if not database_url:
+        return
+    
+    # Check if URL contains Railway internal hostname
+    if 'railway.internal' in database_url:
+        logger.warning("Detected Railway internal hostname in DATABASE_URL")
+        logger.warning("This URL is only accessible from within Railway's network")
+        logger.warning("Make sure your Railway services are properly linked")
+        logger.warning("If testing locally, you may need to use external connection details")
+        return False
+    
+    return True
+
 def test_database_connection():
     """Test database connection if DATABASE_URL is available."""
     database_url = os.getenv('DATABASE_URL')
@@ -72,9 +106,21 @@ def test_database_connection():
         logger.warning("DATABASE_URL not set, skipping database connection test")
         return True
     
+    # Check for Railway internal hostname issues
+    if not fix_railway_database_url():
+        logger.error("Cannot test database connection with internal Railway hostname")
+        return False
+    
     try:
         from sqlalchemy import create_engine, text
         from sqlalchemy.exc import SQLAlchemyError
+        
+        # Log connection attempt (without sensitive data)
+        if '@' in database_url:
+            host_part = database_url.split('@')[1].split('/')[0]
+            logger.info(f"Attempting database connection to: {host_part}")
+        else:
+            logger.info("Attempting database connection...")
         
         engine = create_engine(database_url)
         with engine.connect() as conn:
@@ -83,6 +129,11 @@ def test_database_connection():
         return True
     except SQLAlchemyError as e:
         logger.error(f"Database connection test failed: {e}")
+        logger.error("This usually means:")
+        logger.error("  1. Railway PostgreSQL service is not properly linked")
+        logger.error("  2. DATABASE_URL contains internal hostname that's not accessible")
+        logger.error("  3. Database credentials are incorrect")
+        logger.error("  4. Database service is not running")
         return False
     except Exception as e:
         logger.error(f"Unexpected error during database test: {e}")
@@ -122,6 +173,8 @@ def main():
     
     # Test connections (but don't fail startup if they fail)
     if env_ok:
+        # Check for Railway-specific issues first
+        fix_railway_database_url()
         test_database_connection()
         test_redis_connection()
     
