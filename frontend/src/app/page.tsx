@@ -13,6 +13,7 @@ import { ResultsPage } from '@/components/results-page';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Logo } from '@/components/ui/logo';
 import { apiClient, JobDescription, ResumeData, Application } from '@/lib/api';
+import { logger, logUtils, measureAsyncPerformance } from '@/lib/logger';
 
 type AppState = 'input' | 'processing' | 'results';
 
@@ -24,34 +25,69 @@ export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Log component mount
+  React.useEffect(() => {
+    logUtils.logComponentMount('HomePage');
+    logger.logPageView('home');
+    
+    return () => {
+      logUtils.logComponentUnmount('HomePage');
+    };
+  }, []);
+
   const handleJobDescriptionExtracted = (jd: JobDescription) => {
+    logger.info('Job Description Extracted', {
+      jobId: jd.id,
+      title: jd.title,
+      company: jd.company,
+    });
     setJobDescription(jd);
     setError(null);
   };
 
   const handleResumeUploaded = (resumeData: ResumeData) => {
+    logger.info('Resume Uploaded', {
+      resumeId: resumeData.id,
+      filename: resumeData.filename,
+    });
     setResume(resumeData);
     setError(null);
   };
 
   const handleGenerateApplication = async () => {
     if (!jobDescription || !resume) {
-      setError('Please provide both a job description and resume');
+      const errorMsg = 'Please provide both a job description and resume';
+      logger.warn('Application Generation Validation Failed', { error: errorMsg });
+      setError(errorMsg);
       return;
     }
+
+    logger.info('Application Generation Started', {
+      jobId: jobDescription.id,
+      resumeId: resume.id,
+    });
 
     setIsProcessing(true);
     setError(null);
 
     try {
-      const newApplication = await apiClient.createApplication(
-        jobDescription.id,
-        resume.id
+      const newApplication = await measureAsyncPerformance(
+        'createApplication',
+        () => apiClient.createApplication(jobDescription.id, resume.id)
       );
+      
+      logger.info('Application Created Successfully', {
+        applicationId: newApplication.id,
+        status: newApplication.status,
+      });
+      
       setApplication(newApplication);
       setAppState('processing');
     } catch (err) {
-      console.error('Error creating application:', err);
+      logger.error('Application Generation Failed', err as Error, {
+        jobId: jobDescription.id,
+        resumeId: resume.id,
+      });
       setError(err instanceof Error ? err.message : 'Failed to create application');
     } finally {
       setIsProcessing(false);

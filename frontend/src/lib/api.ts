@@ -1,4 +1,5 @@
 import { apiConfig } from './config';
+import { apiLogger, measureAsyncPerformance } from './logger';
 
 const API_BASE_URL = apiConfig.baseUrl + apiConfig.endpoints.jobs.replace('/api/v1/jobs', '/api/v1');
 
@@ -50,20 +51,64 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    });
+    const startTime = performance.now();
+    
+    try {
+      apiLogger.info('API Request Started', {
+        method: options.method || 'GET',
+        endpoint,
+        url,
+        headers: options.headers,
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`);
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+        ...options,
+      });
+
+      const duration = performance.now() - startTime;
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        const error = new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`);
+        
+        apiLogger.error('API Request Failed', error, {
+          method: options.method || 'GET',
+          endpoint,
+          url,
+          status: response.status,
+          statusText: response.statusText,
+          duration,
+          errorText,
+        });
+        
+        throw error;
+      }
+
+      apiLogger.logApiCall(
+        options.method || 'GET',
+        endpoint,
+        response.status,
+        duration,
+        { url }
+      );
+
+      return response.json();
+    } catch (error) {
+      const duration = performance.now() - startTime;
+      
+      apiLogger.error('API Request Exception', error as Error, {
+        method: options.method || 'GET',
+        endpoint,
+        url,
+        duration,
+      });
+      
+      throw error;
     }
-
-    return response.json();
   }
 
   // Job Description endpoints

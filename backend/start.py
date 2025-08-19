@@ -25,6 +25,19 @@ def check_environment():
         'REDIS_URL',
     ]
     
+    # Set defaults for Railway requirements
+    if not os.getenv('PORT'):
+        os.environ['PORT'] = '8000'
+        logger.info("Set default PORT=8000")
+    
+    if not os.getenv('HOST'):
+        os.environ['HOST'] = '0.0.0.0'
+        logger.info("Set default HOST=0.0.0.0")
+    
+    if not os.getenv('ENVIRONMENT'):
+        os.environ['ENVIRONMENT'] = 'production'
+        logger.info("Set default ENVIRONMENT=production")
+    
     missing_vars = []
     for var in required_vars:
         if not os.getenv(var):
@@ -33,6 +46,7 @@ def check_environment():
     if missing_vars:
         logger.warning(f"Missing environment variables: {missing_vars}")
         logger.warning("Application may not function properly without these variables")
+        logger.warning("Add PostgreSQL and Redis services to your Railway project")
         return False
     
     logger.info("Environment variables check passed")

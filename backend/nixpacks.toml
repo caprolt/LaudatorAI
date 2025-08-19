@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["python311", "postgresql", "redis"]
+nixPkgs = ["python311", "postgresql", "redis", "pango", "cairo", "gdk-pixbuf", "libffi", "glib", "harfbuzz", "freetype", "fontconfig", "libpng", "libjpeg", "libtiff", "libwebp", "zlib", "bzip2", "xz"]
 
 [phases.install]
 cmds = ["pip install -r requirements.txt"]

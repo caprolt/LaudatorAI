@@ -63,23 +63,49 @@ async def add_process_time_header(request: Request, call_next):
     # Add request ID to request state
     request.state.request_id = request_id
     
-    response = await call_next(request)
+    # Extract client information
+    client_ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent", "unknown")
     
-    # Calculate processing time
-    process_time = time.time() - start_time
-    response.headers["X-Process-Time"] = str(process_time)
-    response.headers["X-Request-ID"] = request_id
-    
-    # Log request
-    log_request(
-        request_id=request_id,
-        method=request.method,
-        path=request.url.path,
-        status_code=response.status_code,
-        duration=process_time
-    )
-    
-    return response
+    try:
+        response = await call_next(request)
+        
+        # Calculate processing time
+        process_time = time.time() - start_time
+        response.headers["X-Process-Time"] = str(process_time)
+        response.headers["X-Request-ID"] = request_id
+        
+        # Log request with enhanced details
+        log_request(
+            request_id=request_id,
+            method=request.method,
+            path=request.url.path,
+            status_code=response.status_code,
+            duration=process_time,
+            ip_address=client_ip,
+            user_agent=user_agent
+        )
+        
+        return response
+        
+    except Exception as e:
+        # Calculate processing time even for errors
+        process_time = time.time() - start_time
+        
+        # Log error with request details
+        logger.exception(
+            f"Request failed | {request.method} {request.url.path} | {process_time:.3f}s",
+            extra={
+                'request_id': request_id,
+                'method': request.method,
+                'path': request.url.path,
+                'duration': process_time,
+                'ip_address': client_ip,
+                'user_agent': user_agent,
+                'error': str(e)
+            }
+        )
+        raise
 
 
 @app.on_event("startup")
