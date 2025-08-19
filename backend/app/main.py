@@ -23,24 +23,25 @@ app = FastAPI(
 
 # Set up CORS with fallback for empty origins
 cors_origins = settings.CORS_ORIGINS
+
+# Apply fallback only if no origins are set
 if not cors_origins:
-    # Fallback to allow common origins in production and development
-    cors_origins = [
-        "http://localhost:3000",
-        "http://localhost:3001", 
-        "https://laudator-ai.vercel.app",
-        "https://laudator-ai-tannercline-5407s-projects.vercel.app",
-        "https://laudator-ai-git-main-tannercline-5407s-projects.vercel.app"
-    ]
+    if settings.ENVIRONMENT == "production":
+        cors_origins = [
+            "https://laudator-ai.vercel.app",
+            "https://laudator-ai-tannercline-5407s-projects.vercel.app",
+            "https://laudator-ai-git-main-tannercline-5407s-projects.vercel.app"
+        ]
+    else:
+        cors_origins = [
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "https://laudator-ai.vercel.app",
+            "https://laudator-ai-tannercline-5407s-projects.vercel.app",
+            "https://laudator-ai-git-main-tannercline-5407s-projects.vercel.app"
+        ]
     logger.warning("No CORS origins configured, using default origins")
 
-# Ensure CORS origins are properly set for production
-if settings.ENVIRONMENT == "production" and not cors_origins:
-    cors_origins = [
-        "https://laudator-ai.vercel.app",
-        "https://laudator-ai-tannercline-5407s-projects.vercel.app",
-        "https://laudator-ai-git-main-tannercline-5407s-projects.vercel.app"
-    ]
 
 app.add_middleware(
     CORSMiddleware,

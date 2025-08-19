@@ -31,14 +31,10 @@
 
 ## 🚀 Deployment
 
-### Production Deployment (Recommended)
-
 LaudatorAI is configured for deployment on modern cloud platforms:
 
 - **Backend**: Deployed on Railway with PostgreSQL and Redis
 - **Frontend**: Deployed on Vercel with automatic CI/CD
-
-📖 **Complete Deployment Guide**: [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
 
 ### Quick Deployment Steps
 
