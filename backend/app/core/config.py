@@ -49,11 +49,26 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     
     # File Storage Configuration
+    # AWS S3 Configuration (Primary for Railway)
+    AWS_ACCESS_KEY_ID: Optional[str] = None
+    AWS_SECRET_ACCESS_KEY: Optional[str] = None
+    AWS_REGION: str = "us-east-1"
+    S3_BUCKET_NAME: str = "laudatorai-files"
+    S3_ENDPOINT_URL: Optional[str] = None  # For S3-compatible services like R2
+    
+    # MinIO Configuration (Fallback for local development)
     MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_ACCESS_KEY: str = "minioadmin"
     MINIO_SECRET_KEY: str = "minioadmin"
     MINIO_BUCKET_NAME: str = "laudatorai"
     MINIO_SECURE: bool = False
+    
+    @property
+    def file_storage_type(self) -> str:
+        """Determine which file storage to use based on environment."""
+        if self.AWS_ACCESS_KEY_ID and self.AWS_SECRET_ACCESS_KEY:
+            return "s3"
+        return "minio"
     
     # LLM Configuration
     OPENAI_API_KEY: Optional[str] = None
