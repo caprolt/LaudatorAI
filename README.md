@@ -41,7 +41,7 @@ LaudatorAI is configured for deployment on modern cloud platforms:
 1. **Backend (Railway)**:
    - Connect your GitHub repository to Railway
    - Add PostgreSQL and Redis services
-   - Configure environment variables
+   - Configure environment variables (including `PORT=8000` and `BACKEND_CORS_ORIGINS`)
    - Deploy automatically on push to main
 
 2. **Frontend (Vercel)**:
@@ -53,6 +53,8 @@ LaudatorAI is configured for deployment on modern cloud platforms:
    - Update CORS settings
    - Test API connectivity
    - Configure custom domains (optional)
+
+**Important**: Set `PORT=8000` in Railway environment variables to resolve CORS issues. See [CORS Fix Guide](docs/CORS_FIX_GUIDE.md) for detailed instructions.
 
 ## 🛠️ Local Development
 

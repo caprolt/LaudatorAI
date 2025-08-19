@@ -39,6 +39,8 @@ Set the following environment variables in Railway:
 - `MINIO_ACCESS_KEY`: Your MinIO access key
 - `MINIO_SECRET_KEY`: Your MinIO secret key
 - `MINIO_BUCKET_NAME`: Your MinIO bucket name
+- `PORT`: `8000` (required for Railway deployment)
+- `BACKEND_CORS_ORIGINS`: Your frontend domains (e.g., `https://your-app.vercel.app,http://localhost:3000`)
 
 ### 2. Frontend Deployment (Vercel)
 
@@ -67,6 +69,8 @@ Set the following environment variables in Vercel:
 - `MINIO_ACCESS_KEY`: File storage access key
 - `MINIO_SECRET_KEY`: File storage secret key
 - `MINIO_BUCKET_NAME`: File storage bucket name
+- `PORT`: Port for the application (set to `8000` for Railway)
+- `BACKEND_CORS_ORIGINS`: Comma-separated list of allowed frontend domains
 
 #### Frontend (Vercel)
 - `NEXT_PUBLIC_API_URL`: Backend API URL
