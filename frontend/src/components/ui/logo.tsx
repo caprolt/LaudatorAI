@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import Image from 'next/image';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -11,6 +12,8 @@ export const Logo: React.FC<LogoProps> = ({
   showTagline = true, 
   className = '' 
 }) => {
+  const [imageError, setImageError] = useState(false);
+
   const sizeClasses = {
     sm: 'text-lg',
     md: 'text-2xl',
@@ -32,15 +35,34 @@ export const Logo: React.FC<LogoProps> = ({
     xl: 'text-lg'
   };
 
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
   return (
     <div className={`flex flex-col items-center ${className}`}>
       {/* Logo Image */}
-      <div className={`${imageSizes[size]} mb-4`}>
-        <img 
-          src="/laudatorai-high-resolution-logo.png" 
-          alt="LaudatorAI Logo" 
-          className="w-full h-full object-contain"
-        />
+      <div className={`${imageSizes[size]} mb-4 relative`}>
+        {!imageError ? (
+          <Image 
+            src="/laudatorai-high-resolution-logo.png" 
+            alt="LaudatorAI Logo" 
+            fill
+            className="object-contain"
+            onError={handleImageError}
+            priority
+          />
+        ) : (
+          // Fallback to text-based logo if image fails to load
+          <div className="w-full h-full flex flex-col items-center justify-center">
+            <div className="w-3/4 h-3/4 rounded-full bg-gradient-to-br from-yellow-500 via-yellow-400 to-yellow-600 flex items-center justify-center mb-2">
+              <span className="text-yellow-800 font-bold text-lg">L</span>
+            </div>
+            <h1 className={`font-serif font-bold gradient-text ${sizeClasses[size]} tracking-wide`}>
+              LaudatorAI
+            </h1>
+          </div>
+        )}
       </div>
 
       {/* Tagline - only show if not already in the logo image */}
