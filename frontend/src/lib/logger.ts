@@ -1,27 +1,37 @@
 import log from 'loglevel';
-import remote from 'loglevel-plugin-remote';
 
-// Configure loglevel
-log.setLevel(process.env.NODE_ENV === 'production' ? log.levels.INFO : log.levels.DEBUG);
+// Only import and configure remote logging on the client side
+let remote: any = null;
+if (typeof window !== 'undefined') {
+  import('loglevel-plugin-remote').then((module) => {
+    remote = module.default;
+    
+    // Configure loglevel
+    log.setLevel(process.env.NODE_ENV === 'production' ? log.levels.INFO : log.levels.DEBUG);
 
-// Configure remote logging for production
-if (process.env.NODE_ENV === 'production') {
-  remote.apply(log, {
-    url: '/api/logs', // We'll create this endpoint
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    format: (level, name, timestamp, message) => ({
-      level,
-      name,
-      timestamp,
-      message,
-      url: typeof window !== 'undefined' ? window.location.href : '',
-      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
-      sessionId: getSessionId(),
-    }),
+    // Configure remote logging for production
+    if (process.env.NODE_ENV === 'production' && remote) {
+      remote.apply(log, {
+        url: '/api/logs', // We'll create this endpoint
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        format: (level: string, name: string, timestamp: string, message: string) => ({
+          level,
+          name,
+          timestamp,
+          message,
+          url: typeof window !== 'undefined' ? window.location.href : '',
+          userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+          sessionId: getSessionId(),
+        }),
+      });
+    }
   });
+} else {
+  // Server-side configuration
+  log.setLevel(process.env.NODE_ENV === 'production' ? log.levels.INFO : log.levels.DEBUG);
 }
 
 // Session ID for tracking user sessions
@@ -65,7 +75,7 @@ class Logger {
     const baseInfo = {
       timestamp,
       level,
-      logger: this.logger.name,
+      logger: (this.logger as any).name || 'unknown',
       sessionId: getSessionId(),
       url: typeof window !== 'undefined' ? window.location.href : '',
       ...this.context,
@@ -157,6 +167,10 @@ class Logger {
     });
   }
 
+  logPerformanceMeasurement(name: string, duration: number, data?: any): void {
+    this.logPerformance(name, duration, 'ms', data);
+  }
+
   logSecurityEvent(event: string, severity: 'low' | 'medium' | 'high' | 'critical', data?: any): void {
     this.warn('Security Event', {
       event,
@@ -167,7 +181,7 @@ class Logger {
 
   // Add context to logger
   withContext(context: Record<string, any>): Logger {
-    return new Logger(this.logger.name, { ...this.context, ...context });
+    return new Logger((this.logger as any).name || 'unknown', { ...this.context, ...context });
   }
 }
 
