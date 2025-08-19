@@ -1,9 +1,8 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Playfair_Display } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
-const playfair = Playfair_Display({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'LaudatorAI - AI-Powered Job Application Assistant',
@@ -31,11 +30,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.className} h-full antialiased`}>
-        <style jsx global>{`
-          .font-serif {
-            font-family: ${playfair.style.fontFamily};
-          }
-        `}</style>
         {children}
       </body>
     </html>
