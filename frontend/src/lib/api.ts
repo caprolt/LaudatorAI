@@ -1,7 +1,7 @@
 import { apiConfig } from './config';
 import { apiLogger, measureAsyncPerformance } from './logger';
 
-const API_BASE_URL = apiConfig.baseUrl + apiConfig.endpoints.jobs.replace('/api/v1/jobs', '/api/v1');
+const API_BASE_URL = apiConfig.baseUrl;
 
 export interface JobDescription {
   id: string;
@@ -113,7 +113,7 @@ class ApiClient {
 
   // Job Description endpoints
   async extractJobDescription(url: string): Promise<JobDescription> {
-    const response = await this.request<any>('/jobs/extract', {
+    const response = await this.request<any>('/api/v1/jobs/extract', {
       method: 'POST',
       body: JSON.stringify({ url }),
     });
@@ -131,7 +131,7 @@ class ApiClient {
   }
 
   async getJobDescription(id: string): Promise<JobDescription> {
-    const response = await this.request<any>(`/jobs/${id}`);
+    const response = await this.request<any>(`/api/v1/jobs/${id}`);
     
     return {
       id: response.id.toString(),
@@ -149,7 +149,7 @@ class ApiClient {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${this.baseUrl}/resumes/upload`, {
+    const response = await fetch(`${this.baseUrl}/api/v1/resumes/upload`, {
       method: 'POST',
       body: formData,
     });
@@ -170,7 +170,7 @@ class ApiClient {
   }
 
   async getResume(id: string): Promise<ResumeData> {
-    const response = await this.request<any>(`/resumes/${id}`);
+    const response = await this.request<any>(`/api/v1/resumes/${id}`);
     
     return {
       id: response.id.toString(),
@@ -185,7 +185,7 @@ class ApiClient {
     jobDescriptionId: string,
     resumeId: string
   ): Promise<Application> {
-    const response = await this.request<any>('/applications', {
+    const response = await this.request<any>('/api/v1/applications', {
       method: 'POST',
       body: JSON.stringify({
         job_id: parseInt(jobDescriptionId),
@@ -205,7 +205,7 @@ class ApiClient {
   }
 
   async getApplication(id: string): Promise<Application> {
-    const response = await this.request<any>(`/applications/${id}`);
+    const response = await this.request<any>(`/api/v1/applications/${id}`);
     
     return {
       id: response.id.toString(),
@@ -224,7 +224,7 @@ class ApiClient {
 
   // Cover Letter endpoints
   async getCoverLetter(applicationId: string): Promise<CoverLetter> {
-    const response = await this.request<any>(`/cover-letters/${applicationId}`);
+    const response = await this.request<any>(`/api/v1/cover-letters/${applicationId}`);
     
     return {
       id: response.id.toString(),
@@ -238,7 +238,7 @@ class ApiClient {
 
   // Health check
   async healthCheck(): Promise<{ status: string }> {
-    return this.request<{ status: string }>('/health');
+    return this.request<{ status: string }>('/api/v1/health');
   }
 }
 
