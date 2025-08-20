@@ -1,5 +1,13 @@
+// Helper function to ensure HTTPS in production
+const ensureHttps = (url: string): string => {
+  if (process.env.NODE_ENV === 'production' && url.startsWith('http://')) {
+    return url.replace('http://', 'https://');
+  }
+  return url;
+};
+
 export const config = {
-  apiUrl: process.env.NEXT_PUBLIC_API_URL || 'https://laudatorai-production.up.railway.app',
+  apiUrl: ensureHttps(process.env.NEXT_PUBLIC_API_URL || 'https://laudatorai-production.up.railway.app'),
   environment: process.env.NEXT_PUBLIC_ENVIRONMENT || 'development',
   isProduction: process.env.NODE_ENV === 'production',
   isDevelopment: process.env.NODE_ENV === 'development',

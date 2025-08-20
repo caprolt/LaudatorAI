@@ -73,6 +73,7 @@ class Settings(BaseSettings):
     # LLM Configuration
     OPENAI_API_KEY: Optional[str] = None
     LLM_PROVIDER: str = "openai"  # openai, ollama, huggingface
+    LLM_MODEL: str = "gpt-4"  # gpt-4, gpt-3.5-turbo, gpt-4-turbo, etc.
     
     # Sentry Configuration
     SENTRY_DSN: Optional[str] = None

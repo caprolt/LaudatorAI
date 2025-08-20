@@ -61,7 +61,7 @@ class CoverLetterGenerator:
         
         try:
             response = self.client.chat.completions.create(
-                model="gpt-4",  # TODO: Make configurable
+                model=settings.LLM_MODEL,  # Use configured model
                 messages=[
                     {
                         "role": "system",
