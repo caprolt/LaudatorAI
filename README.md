@@ -1,6 +1,37 @@
 # LaudatorAI
 
+<div align="center">
+
+![LaudatorAI Logo](frontend/public/laudatorai-high-resolution-logo.png)
+
+**Your AI Advocate in the Job Market**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-009688.svg)](https://fastapi.tiangolo.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6.svg)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7+-DC382D.svg)](https://redis.io/)
+
+[Features](#-features) •
+[Demo](#-demo) •
+[Quick Start](#-local-development) •
+[Architecture](docs/ARCHITECTURE.md) •
+[Contributing](CONTRIBUTING.md) •
+[License](LICENSE)
+
+</div>
+
+---
+
 **LaudatorAI** is your AI advocate in the job market, inspired by the ancient *laudator* — one who praises and elevates others' achievements. This platform automates the tailoring of resumes and the crafting of cover letters to match specific job postings, ensuring your applications stand out with precision and polish.
+
+## ✨ Demo
+
+> **Note**: Screenshots and demo video coming soon! See [docs/images/README.md](docs/images/README.md) for how to contribute demo materials.
+
+<!-- Placeholder for demo GIF or video -->
 
 ## 🚀 Features
 
@@ -9,17 +40,44 @@
 - **Cover Letter Generation**: Generate compelling, personalized cover letters
 - **Professional Output**: Get polished DOCX and PDF files ready for your job applications
 - **Modern Web Interface**: Beautiful, responsive UI built with Next.js and Tailwind CSS
+- **Background Processing**: Asynchronous task handling with Celery for responsive UX
+- **File Management**: Secure file storage with MinIO/S3 compatibility
+- **Comprehensive Testing**: Full test coverage with pytest and integration tests
 
 ## 🏗️ Architecture
 
-- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui
-- **Backend**: FastAPI (Python 3.11+), SQLAlchemy, Celery
-- **Database**: PostgreSQL
-- **Cache/Queue**: Redis
-- **File Storage**: MinIO/S3
-- **Web Scraping**: Playwright + Readability
-- **LLM Integration**: Pluggable (OpenAI/Ollama/HuggingFace)
-- **Document Processing**: python-docx + weasyprint
+<div align="center">
+
+```mermaid
+graph TB
+    A[Next.js Frontend] -->|REST API| B[FastAPI Backend]
+    B -->|ORM| C[(PostgreSQL)]
+    B -->|Queue| D[Redis]
+    D -->|Tasks| E[Celery Workers]
+    E -->|Scrape| F[Job Sites]
+    E -->|Generate| G[LLM APIs]
+    E -->|Store| H[MinIO/S3]
+    B -->|Files| H
+```
+
+</div>
+
+### Technology Stack
+
+| Layer | Technologies |
+|-------|-------------|
+| **Frontend** | Next.js 14, TypeScript, Tailwind CSS, shadcn/ui |
+| **Backend** | FastAPI, Python 3.11+, SQLAlchemy, Pydantic |
+| **Database** | PostgreSQL 15+ with JSONB support |
+| **Cache/Queue** | Redis 7+ (Celery broker) |
+| **Workers** | Celery with multiple queues |
+| **File Storage** | MinIO / S3-compatible storage |
+| **Web Scraping** | Playwright + Readability |
+| **LLM** | Pluggable (OpenAI/Ollama/HuggingFace) |
+| **Documents** | python-docx + WeasyPrint |
+| **Deployment** | Docker, Railway (backend), Vercel (frontend) |
+
+📚 **[View Detailed Architecture](docs/ARCHITECTURE.md)**
 
 ## 📋 Prerequisites
 
@@ -262,33 +320,104 @@ The project includes Docker configurations for easy deployment:
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on:
+
+- Code of conduct
+- Development workflow
+- Coding standards
+- Testing requirements
+- Pull request process
+
+### Quick Start for Contributors
+
+```bash
+# Fork and clone the repository
+git clone https://github.com/YOUR_USERNAME/LaudatorAI.git
+
+# Set up backend
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# Set up frontend
+cd ../frontend
+npm install
+
+# Start development
+docker-compose up -d  # Or start services individually
+```
+
+## 📚 Documentation
+
+- **[Architecture Overview](docs/ARCHITECTURE.md)** - System design and technical decisions
+- **[API Documentation](docs/API_EXAMPLES.md)** - API endpoints and examples
+- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Deployment instructions
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
+- **[Portfolio Highlights](PORTFOLIO.md)** - Project highlights for job applications
+
+## 🧪 Testing
+
+### Backend Tests
+
+```bash
+cd backend
+pytest                    # Run all tests
+pytest --cov=app tests/   # With coverage
+pytest -v                 # Verbose output
+```
+
+### Frontend Tests
+
+```bash
+cd frontend
+npm test                  # Run tests
+npm run type-check        # TypeScript validation
+npm run lint              # ESLint
+```
+
+### Code Quality
+
+```bash
+# Backend
+cd backend
+black app/               # Format code
+isort app/               # Sort imports
+mypy app/                # Type checking
+flake8 app/              # Linting
+
+# Frontend
+cd frontend
+npm run lint             # ESLint
+npm run type-check       # TypeScript
+```
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## 🙏 Acknowledgments
 
-- **Documentation**: Check the [docs/](docs/) directory
-- **Issues**: Report bugs and feature requests on GitHub
-- **Discussions**: Join the community discussions
+- Inspired by the ancient Roman tradition of the *laudator*
+- Built with modern open-source technologies
+- Special thanks to all contributors
 
-## 🗺️ Roadmap
+## 📧 Contact & Links
 
-- [ ] Phase 1: Foundation & Setup ✅
-- [ ] Phase 2: Core Backend Infrastructure
-- [ ] Phase 3: Job Description Processing
-- [ ] Phase 4: Resume Processing
-- [ ] Phase 5: Cover Letter Generation
-- [ ] Phase 6: Frontend Development
-- [ ] Phase 7: Integration & Testing
-- [ ] Phase 8: Deployment & Launch
+- **GitHub**: [caprolt/LaudatorAI](https://github.com/caprolt/LaudatorAI)
+- **Issues**: [Report a bug or request a feature](https://github.com/caprolt/LaudatorAI/issues)
+- **Discussions**: [Join the community](https://github.com/caprolt/LaudatorAI/discussions)
+
+## ⭐ Show Your Support
+
+Give a ⭐️ if this project helped you!
 
 ---
 
+<div align="center">
+
 **LaudatorAI** - Your AI advocate in the job market 🚀
+
+Made with ❤️ by developers, for developers
+
+</div>
